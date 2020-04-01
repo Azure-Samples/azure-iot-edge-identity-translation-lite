@@ -31,11 +31,6 @@ namespace IcaIdentityTranslation.LeafDeviceProcess
         {
             log.LogInformation("LeafDeviceCloudEventGrid function processing Event Grid trigger.");
             log.LogInformation(eventGridEvent.Data.ToString());
-
-            //TODO in general: add exception handling, validate success, log more into App insights
-            //TODO add error handling for checking if success or exceptions, inc throttling, retry...
-            //https://docs.microsoft.com/en-us/dotnet/api/microsoft.azure.devices.client.exceptions?view=azure-dotnet
-
             
             iotHubConnectionString = System.Environment.GetEnvironmentVariable("iotHubConnectionString", EnvironmentVariableTarget.Process);
             dynamic data = JsonConvert.DeserializeObject(eventGridEvent.Data.ToString());
@@ -43,10 +38,10 @@ namespace IcaIdentityTranslation.LeafDeviceProcess
             LeafEvent deviceEvent = JsonConvert.DeserializeObject<LeafEvent>(data.body.ToString());
 
             registryManager = RegistryManager.CreateFromConnectionString(iotHubConnectionString);
-            //get the parent and child, then assign parent Scope to child device 
 
             log.LogInformation($"DeviceId: {deviceEvent.LeafDeviceId}");
             log.LogInformation($"Parent device id: {deviceEvent.EdgeDeviceId}");
+
             DmCallback callbackResult = new DmCallback();
             callbackResult.DeviceId = deviceEvent.LeafDeviceId;
 
@@ -121,10 +116,13 @@ namespace IcaIdentityTranslation.LeafDeviceProcess
                                 await registryManager.UpdateDeviceAsync(leafDevice);
                                 callbackResult.ResultCode = 200;
                                 callbackResult.ResultDescriptionn = "Device already existed, we updated the IoT Hub registration to 'enabled'";
+
+                            }
+                            catch (System.Exception exception)
+                            {
+                                log.LogError($"Exception when adding leaf device: {exception.Message}");
                             }
 
-
-                            log.LogInformation($"Device '{deviceEvent.LeafDeviceId}'");
                         }
                     }
                     else
@@ -141,36 +139,49 @@ namespace IcaIdentityTranslation.LeafDeviceProcess
                         await registryManager.RemoveDeviceAsync(deviceEvent.LeafDeviceId);
                         callbackResult.ResultCode = 200;
                         callbackResult.ResultDescriptionn = "Device successfully deleted in IoT Hub";
+                        log.LogInformation($"Device deleted '{deviceEvent.LeafDeviceId}'");
                     }
-                    catch (DeviceNotFoundException)
+                    catch (DeviceNotFoundException dle)
                     {
-                        //todo
+                        callbackResult.ResultCode = 500;
+                        callbackResult.ResultDescriptionn = "DeviceNotFoundException occurred when trying to delete the device";
+                        log.LogError($"DeviceNotFoundException when trying to delete leaf device: {dle.Message}");
+                        
                     }
-                    catch (System.Exception)
+                    catch (System.Exception exception)
                     {
-                        //todo
+                        callbackResult.ResultCode = 500;
+                        callbackResult.ResultDescriptionn = $"Exception when trying to delete the device: {exception.Message}";
+                        log.LogError($"Exception when trying to delete leaf device: {exception.Message}");
                     }
-
-                    log.LogInformation($"Device deleted '{deviceEvent.LeafDeviceId}'");
 
                     break;
 
                 case LeafEvent.Operations.disable:
-                    var device = await registryManager.GetDeviceAsync(deviceEvent.LeafDeviceId);
-                    device.Status = DeviceStatus.Disabled;
+                    try
+                    {
+                        var device = await registryManager.GetDeviceAsync(deviceEvent.LeafDeviceId);
+                        device.Status = DeviceStatus.Disabled;
 
-                    await registryManager.UpdateDeviceAsync(device);
-                    callbackResult.ResultCode = 200;
-                    callbackResult.ResultDescriptionn = "Device successfully disabled in IoT Hub";
+                        await registryManager.UpdateDeviceAsync(device);
+                        callbackResult.ResultCode = 200;
+                        callbackResult.ResultDescriptionn = "Device successfully disabled in IoT Hub";
 
-                    log.LogInformation($"Device disabled: '{deviceEvent.LeafDeviceId}'");
+                        log.LogInformation($"Device disabled: '{deviceEvent.LeafDeviceId}'");
+
+                    }catch(System.Exception exc)
+                    {
+                        callbackResult.ResultCode = 500;
+                        callbackResult.ResultDescriptionn = $"Error when trying to disable device: {exc.Message}";
+                    }
 
                     break;
 
             }
 
-            //DM with result to Module (if error, then module can log locally)
+            //DM with result to Module (also if error, then Edge module can log locally)
             serviceClient = ServiceClient.CreateFromConnectionString(iotHubConnectionString);
+            
 
             var methodInvocation = new CloudToDeviceMethod("ItmCallback") { ResponseTimeout = TimeSpan.FromSeconds(30) };
             methodInvocation.SetPayloadJson(JsonConvert.SerializeObject(callbackResult));
@@ -182,7 +193,7 @@ namespace IcaIdentityTranslation.LeafDeviceProcess
             }
             catch
             {
-                //retry TODO
+                //TODO retry?
                 log.LogWarning($"Error in calling DM 'ItmCallback' to module '{deviceEvent.EdgeModuleId}'");
             }
 

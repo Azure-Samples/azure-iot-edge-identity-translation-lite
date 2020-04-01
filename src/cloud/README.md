@@ -1,30 +1,19 @@
 # Introduction 
-This project contains some guidance and the source code for the cloud function side of managing leaf devices for identity translation concept with IoT Edge.
+This section of the source code implements the cloud side processing for the Identity Translation. It leverages IoT Hub's Event Grid support for routing specific messages to an Azure Function.
 
-## Setting up the cloud function processing
-- Create Event Grid subscription for telemetry messages and filter the route on Query: `messageType = 'LeafEvent'`
-- Azure Function to process the LeafEvent message
-
-Schema for the LeafEvent event:
-```
-Header:
-    message.Properties.Add("messageType", "LeafEvent");
-
-Payload sample:
-{
-    "hubHostname": "myhub",
-    "leafDeviceId":"myleafDevice3",
-    "edgeDeviceId":"simulateEdgeItm",
-    "edgeModuleId":"itm-bridge",
-    "operation":"create"
-}
-```
+## Setting up the function to process Event Grid messages
+- Deploy the function in the folder /functions to your Azure subscription
+- Update the Application Properties (Environment variables) in the Function (app) settings to reflect the `local.settings.json` settings below.
+- Create the Event Grid subscription in IoT Hub
+    - New subscription > choose Azure Function and connect to your Azure function you deployed
+- Update the automatically created route:
+    - Go to IoT Hub - Endpoint routing > query `itmtype = 'LeafEvent'`.
 
 ### Running locally
 
 To run the function locally you will need Visual Studio Code with the Azure Functions tools.
 
-1. Please update or update a file in this folder named `local.settings.json` and add content as follows:
+1. Please update or update a file in the /functions folder named `local.settings.json` and add content as follows:
 
 ```
 {
@@ -32,23 +21,16 @@ To run the function locally you will need Visual Studio Code with the Azure Func
     "Values": {
         "AzureWebJobsStorage": "[YOURSTORAGECONNECTION_STRING]",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-        "IoTHubConnectionString" : "YOURHUBCONNECTION_STRING(owner)",
+        "IoTHubConnectionString" : "YOURHUBCONNECTION_STRING(registry,service)",
         "WhitelistStorageConnection": "YOURSTORAGECONNECTION_STRING",
         "WhitelistContainerName": "whitelist",
         "WhitelistFilename": "whitelistitm.txt"
     }
 }
 ```
-2. There is a sample of the whitelist devices list format, simply add one line per device name and upload to your storage account.
-3. For testing you can use the device simulator in folder 'simulator'. In terminal, browse to the folder, then run `dotnet run "YOURDEVICECONNECTIONSTRING"`, but first change the code of the payloed in the method `SendDeviceToCloudMessagesAsync`.
+2. There is a sample of the whitelist devices list format, simply add one line per device ID and upload to your storage account.
+3. You can run the function locally by leveraging Azure Functions tools in Visual Studio Code.
 
-## Setting up the function to process Event Grid messages
-- Deploy the function in the folder /functions
-- Update the Application Properties (Environment variables) in the Function (app) settings
-- Create the Event Grid subscription in IoT Hub
-    - New subscription > Azure function and connect to your Azure function you deployed
-- Update the automatically created route:
-    - Go to IoT Hub - Endpoint routing > query `itmtype = 'LeafEvent'`.
 
 ## Resources for running Event Grid webhooks and Functions
 
@@ -64,4 +46,20 @@ A few things to know:
 - Your webhook Function must return 
 
 At the time of writing, pricing for ingress and egress to Event Grid is charged by million messages. For this reason it is useful using filter queries in the IoT Hub Route, rather than sending everything to Event Grid and then filtering at the subscription level.
+
+## For reference
+Schema for the LeafEvent event:
+```
+Header:
+    message.Properties.Add("messageType", "LeafEvent");
+
+Payload sample:
+{
+    "hubHostname": "myhub",
+    "leafDeviceId":"myleafDevice3",
+    "edgeDeviceId":"simulateEdgeItm",
+    "edgeModuleId":"itm-bridge",
+    "operation":"create"
+}
+```
 
