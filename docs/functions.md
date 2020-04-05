@@ -2,12 +2,14 @@
 This section of the source code implements the cloud side processing for the Identity Translation. It leverages IoT Hub's Event Grid support for routing specific messages to an Azure Function.
 
 ## Setting up the function to process Event Grid messages
-- Deploy the function in the folder /functions to your Azure subscription
+- Deploy the function in the folder /cloud/functions to your Azure subscription.
 - Update the Application Properties (Environment variables) in the Function (app) settings to reflect the `local.settings.json` settings below.
 - Create the Event Grid subscription in IoT Hub
-    - New subscription > choose Azure Function and connect to your Azure function you deployed
+    - New subscription > choose Azure Function and connect to your Azure function you deployed.
 - Update the automatically created route:
-    - Go to IoT Hub - Endpoint routing > query `itmtype = 'LeafEvent'`.
+    - Go to IoT Hub > Endpoint routing > query `itmtype = 'LeafEvent'`.
+- Upload the 'whitelistitm.txt' file to your preferred Storage account. 
+- Update your deployed function to contain the Application Properites as documented in the running locally section below.
 
 ### Running locally
 

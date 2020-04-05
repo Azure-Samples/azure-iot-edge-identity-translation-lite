@@ -8,7 +8,7 @@ description: "Add 150 character max description"
 urlFragment: "update-this-to-unique-url-stub"
 ---
 
-# Official Microsoft Sample
+# Azure IoT Edge Identity Translation Lite: Sample on implementing Identity Translation at the edge
 
 <!-- 
 Guidelines on README format: https://review.docs.microsoft.com/help/onboard/admin/samples/concepts/readme-template?branch=master
@@ -18,7 +18,8 @@ Guidance on onboarding samples to docs.microsoft.com/samples: https://review.doc
 Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
 -->
 
-Give a short description for your sample here. What does it do and why is it important?
+This sample builds the required components to support Idenity Translation pattern with Azure IoT Edge. Identity translation is a pattern by which you have to implement both protocol translation as well as having the devices behind the protocol adopt an identity in IoT Hub. However, the devices themselves don't talk directly to IoT Hub, but rather get their identities impersonated by a custom module in IoT Edge.
+
 
 ## Contents
 
@@ -27,15 +28,19 @@ Outline the file contents of the repository. It helps users navigate the codebas
 | File/folder       | Description                                |
 |-------------------|--------------------------------------------|
 | `src`             | Sample source code.                        |
+| `docs`            | Folder with docs and media files.          |
 | `.gitignore`      | Define what to ignore at commit time.      |
 | `CHANGELOG.md`    | List of changes to the sample.             |
 | `CONTRIBUTING.md` | Guidelines for contributing to the sample. |
 | `README.md`       | This README file.                          |
 | `LICENSE`         | The license for the sample.                |
+| `SECURITY.md`     | The security disclaimer.                   |
 
 ## Prerequisites
 
-Outline the required components and tools that a user might need to have on their machine in order to run the sample. This can be anything from frameworks, SDKs, OS versions or IDE releases.
+- An Azure account and access to a subscription where you can provision new resources (IoT Hub, Functions, Storage, Container Registry).
+- Visual Studio Code if you want to run any parts of the sample locally.
+- Docker Desktop for building the container modules.
 
 ## Setup
 
@@ -47,7 +52,12 @@ Outline step-by-step instructions to execute the sample and see its output. Incl
 
 ## Key concepts
 
-Provide users with more context on the tools and services used in the sample. Explain some of the code that is being used and how services interact with each other.
+For this Identity Translation Lite sample we are relying on a protocol translation module which is to be seen as something you can replace with your own module. This protocol translation module generates messages into edgeHub with certain headers. These messages can then be picked up by the second module: the Identity Translation module.
+
+The solution also comprises of a cloud section that takes care of provisioning the device on the IoT Hub and assigning it as a child of the IoT Edge device. To prevent any type of child device to be provisioned, there is a whitelisting file that validates whether the child device can be provisioned. This cloud solution leverages an [Azure Function](docs/functions.md) that gets triggered by an Event Grid subscription.
+
+![Registration flow diagram](docs/media/registrationflow.png)
+
 
 ## Contributing
 
