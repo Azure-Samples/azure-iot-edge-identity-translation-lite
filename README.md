@@ -40,11 +40,18 @@ Outline the file contents of the repository. It helps users navigate the codebas
 
 - An Azure account and access to a subscription where you can provision new resources (IoT Hub, Functions, Storage, Container Registry).
 - Visual Studio Code if you want to run any parts of the sample locally.
-- Docker Desktop for building the container modules.
+- Docker Desktop for building the container modules (if not using the pre-built images).
 
 ## Setup
 
 Explain how to prepare the sample once the user clones or downloads the repository. The section should outline every step necessary to install dependencies and set up any settings (for example, API keys and output folders).
+
+Automated sample setup:
+1. Clone this repo.
+2. 
+
+There is also an option to setting up everything manually, including building the container images. You can find a [step-by-step guide here](/docs/stepbystep.md).
+
 
 ## Running the sample
 
