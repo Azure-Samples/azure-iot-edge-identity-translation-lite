@@ -3,3 +3,6 @@ myleafDevice2
 myleafDevice3
 client0
 client1
+client3
+client4
+client5

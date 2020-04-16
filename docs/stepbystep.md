@@ -116,28 +116,78 @@ In this section we will use Visual Studio Code to configure, build and deploy th
     - Create a new .env file (or rename the supplied `.env.temp` one)
     - Copy the variables from `.env.temp` and fill in the Azure Container registry username, password and login server with the values you retrieved above.
 3. Login into the server with docker, open the Terminal in Visual Studio Code: `docker login [your_acr].azurecr.io -p "[YOURPWD]" -u itmdocsarc`
-4. Review the deployment template `deployment.debug.template.json`: this one contains:
+4. Review the deployment template `deployment.debug.template.json`. This one contains three custom modules:
     - Identity Translation Module (`itm`): this is the core of the solution taking care of doing identity translation, sending a creation message to the cloud (for provisioning and child device assignment), and some caching of messages while the device is under creation.
     - Protocol Translation Module `ptm`: this is a sample that reads messages from an MQTT Mosquitto broker installed on the Edge as an additional module. It puts messages into edgeHub for further processing by the Identity Translation module.
     - Mosquitto: this is a standard Eclipse Mosquitto MQTT broker, which unsecure clients (our Python code) will connect to.
-    - Simulated temperature sensor: added as an additional module that sends its messages upstream.
 5. In Visual Studio, make sure you configure the Azure IoT Hub extension to be connected to your newly created hub. Open Command Palette, type `Azure IoT Hub: Select IoT Hub`. Select your hub to persist.
 6. Right-click the `deployment.debug.template.json` file and choose 'Build and Push IoT Edge Solution'. This step builds the container images `itm` and `ptm` and pushes them to your configured Azure container registry.
 7. Now we can deploy to our IoT edge VM, there is now a configuration file under `/.confg/deployment.debug.amd64.json`. Right-click this file and choose 'Create deployment for single device'.
 8. In the dropdown on the command palette, select your edge device 'edgeIdentityLite'.
 9. Validate the modules got deployed and are running, either through the Azure Portal, or by SSH into your VM.
     - Via Cloud Shell run the ssh command to log into the machine `ssh azureuser@[yourvmipaddress]`
-    - Run the command `iotedge list` to view the running modules. You should see 4 modules running. Note it can take 30 seconds to a few minutes to get all the containers running.
+    - Run the command `iotedge list` to view the running modules. You should see five modules running. Note it can take 30 seconds to a few minutes to get all the containers running.
 
 
 ### Install Python and simulation script on VM
 Note: we use the same VM as the one running IoT Edge for ease of use. You could also run the client MQTT client scripts on another machine but then you would need to configure networking to allow incoming traffic on the VM.
 
-1. Log into the Edge VM, if you are not yet logged in.
-2. Install Python
+1. SSH into the Edge VM, if you are not yet logged in. You can use Cloud Shell for this.
+2. Install Python on the VM:
+    ```
+    sudo apt-get update
+    sudo apt-get install -y python3-dev
+    sudo apt-get install -y libffi-dev
+    sudo apt-get install -y libssl-dev
+    sudo apt install python3-pip
+    sudo pip3 install paho-mqtt
+    ```
+3. Copy the file with the simulation of devices to the VM. This file can be found on /src/test/sim_clients.py
+    - If using Cloud Shell, first upload the file to the cloud shell storage/disk by using the Upload/download files option.
+4. Exit the SSH session and copy the file from local Cloud shell disk to your VM:
+    `scp sim_clients.py [youruser]@[yourVMIP]:/home/[your_user]/sim_clients.py `
+5. SSH back into the VM and validate the file is ready to be used: `ls` should return 'sim_clients.py'.
 
 ## Run the sample and simulate clients
 
+1. Using Visual Studio Code, with the Azure IoT Tools, start listening to telemetry messages from the IoT Edge device: right-click the Azure IoT Hub pane and choose 'Start Monitoring Built-in Event Endpoint'.
+![Monitor built in endpoint](media/vscodemonitord2c.png)
+2. Back in the Cloud Shell, SSH into the VM.
+3. Run the simulator script: 
+`python3 sim_clients.py -c 6 -n client -p 1`
+4. Leave it running for now, you can now go into Visual Studio Code and should see message logging for th creation of the devices such as this:
+```
+[IoTHubMonitor] [3:23:34 PM] Message received from [edgeIdentityLite/IdentityTranslationLite]:
+{
+  "body": {
+    "hubHostname": "[somehub].azure-devices.net",
+    "leafDeviceId": "client2",
+    "edgeDeviceId": "edgeIdentityLite",
+    "edgeModuleId": "IdentityTranslationLite",
+    "operation": "create"
+  },
+  "applicationProperties": {
+    "itmtype": "LeafEvent"
+  }
+}
+```
+5. After a few moments, the Azure Function will have executed, and the Identity Translation module will start being abel to send messages with the leaf device identities, such as:
+```
+[IoTHubMonitor] [4:06:47 PM] Message received from [client1]:
+{
+  "topic": "device/client1/message",
+  "payload": {
+    "param2": 0.7107092914863314,
+    "param1": 39
+  }
+}
+```
+6. You might also want to check the logs for the Event Grid subscription and the Azure Function logs to see how it executed.
+7. To close down the script you can exit the sim_clients.py script running.
+
+### Clean up resources
+
+To remove everything you created you can simply delete the Resource Group in Azure, both the VM and all Azure services will be deleted.
 
 
 
