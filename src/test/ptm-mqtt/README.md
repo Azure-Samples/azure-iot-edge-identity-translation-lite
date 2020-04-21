@@ -9,22 +9,22 @@ python sim_clients.py [-h] -c CLIENTS_NUM -n CLIENTS_ROOT_NAME -i INTERVAL [--br
 required arguments:
 | Parameter | Description|
 |-------------------|--------------------------------------------|
-| `-c CLIENTS_NUM`      | Number of mqtt clients to be created. Default is 20.|
-| `-n CLIENTS_ROOT_NAME`  | client ID is built by appending an incremental number "i" to this root name.|
-| `-i INTERVAL`      | interval (in seconds) at which the client is sending messages. |   
+| -c CLIENTS_NUM      | Number of mqtt clients to be created. Default is 20.|
+| -n CLIENTS_ROOT_NAME  | client ID is built by appending an incremental number "i" to this root name.|
+| -i INTERVAL      | interval (in seconds) at which the client is sending messages. |   
 
 optional arguments:
 | Parameter | Description|
 |-------------------|--------------------------------------------|
-| `--broker-ip BROKER_IP`      | ip address of the MQTT broker. Default is 127.0.0.1|
-| `--broker-port BROKER_PORT`  | port of the MQTT broker. Default is 1883|
+| --broker-ip BROKER_IP      | ip address of the MQTT broker. Default is 127.0.0.1|
+| --broker-port BROKER_PORT  | port of the MQTT broker. Default is 1883|
 
 ### Message structure
 Each client will send a message with the following structure:
-```json
+```
 {
-    "param1": <random int the range [0,100]>,
-    "param2": <random float>
+    "param1": random int the range [0,100],
+    "param2": random float
 }
 ```
 
@@ -45,6 +45,7 @@ will:
 * create 10 clients with names "device0", "device1", ..., "device9"
 * each client will send a message every 0.5 seconds
 * the default broker ip (127.0.0.1) and port (1883) are used
+
 
 
 The same but also specifying a different broker:
