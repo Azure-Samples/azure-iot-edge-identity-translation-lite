@@ -89,7 +89,7 @@ clients_num = int(parser.clients_num)
 interval = float(parser.interval)
 root_name = parser.clients_root_name
 broker_ip = parser.broker_ip
-broker_port = parser.broker_port
+broker_port = int(parser.broker_port)
 
 #list of clients
 clients=[]
