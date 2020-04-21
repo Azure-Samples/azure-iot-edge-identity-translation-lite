@@ -37,9 +37,20 @@ Here's an example:
 ```
 
 ## Examples:
-To create 10 clients with names "device0", "device1", ..., "device9" sending a random message every 0.5 seconds:
+The following:
+```
+python sim_clients.py -c 10 -n device -i 0.5
+```
+will:
+* create 10 clients with names "device0", "device1", ..., "device9"
+* each client will send a message every 0.5 seconds
+* the default broker ip (127.0.0.1) and port (1883) are used
 
-   python sim_clients.py -c 10 -n device -i 0.5
+
+The same but also specifying a different broker:
+```
+python sim_clients.py -c 10 -n device -i 0.5 --broker-ip 192.168.2.96 --broker-port 1884
+```
 
 ## Pre-requisites
 This script requires:
