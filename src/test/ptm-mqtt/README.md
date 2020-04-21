@@ -1,19 +1,19 @@
 # Overview
-A program to create multiple MQTT clients sending random data.
+"sim_clients.py" is a script to create multiple MQTT clients sending random data.
 
-usage:
+Usage:
 ```
 python sim_clients.py [-h] -c CLIENTS_NUM -n CLIENTS_ROOT_NAME -i INTERVAL [--broker-ip BROKER_IP] [--broker-port BROKER_PORT]
 ```
 
-required arguments:
+Required arguments:
 | Parameter | Description|
 |-------------------|--------------------------------------------|
 | -c CLIENTS_NUM      | Number of mqtt clients to be created. Default is 20.|
 | -n CLIENTS_ROOT_NAME  | client ID is built by appending an incremental number "i" to this root name.|
 | -i INTERVAL      | interval (in seconds) at which the client is sending messages. |   
 
-optional arguments:
+Optional arguments:
 | Parameter | Description|
 |-------------------|--------------------------------------------|
 | --broker-ip BROKER_IP      | ip address of the MQTT broker. Default is 127.0.0.1|
