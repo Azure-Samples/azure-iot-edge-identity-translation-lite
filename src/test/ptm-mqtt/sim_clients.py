@@ -114,24 +114,28 @@ for client in clients:
     client.connect(broker_ip, broker_port, 60)
     client.loop_start()
 
-#sends data
+#main loop to send data
 try:
     while True:
+
+        #loops the clients
         for client in clients:
+            
+            #builds the message to be sent
             topic = "device/{}/message".format(client.client_name)
             payload = {
                 "param1": random.randrange(0,100),
                 "param2": random.random()
             }
 
-            logger.info("{} - message sent: {} - {}".format(client.client_name, topic,json.dumps(payload)))
-
+            #sends data only if client is connected to broker
             if client.is_connected():
                 client.publish(topic, json.dumps(payload))
                 logger.info("{} - message sent: {} - {}".format(client.client_name, topic,json.dumps(payload)))
             else:
                 logger.error("{} is not connected to the broker!".format(client.client_name))
         
+        #waits 
         time.sleep(interval)
 
 except KeyboardInterrupt:

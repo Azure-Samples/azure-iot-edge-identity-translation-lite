@@ -48,6 +48,7 @@ This script requires:
 
 To install python:
 ```
+***
 ```
 
 To install the paho mqtt client:
