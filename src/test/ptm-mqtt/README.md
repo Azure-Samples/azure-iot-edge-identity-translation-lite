@@ -19,6 +19,23 @@ Optional arguments:
 | --broker-ip BROKER_IP      | ip address of the MQTT broker. Default is 127.0.0.1|
 | --broker-port BROKER_PORT  | port of the MQTT broker. Default is 1883|
 
+### Examples:
+The following:
+```
+python sim_clients.py -c 10 -n device -i 0.5
+```
+will:
+* create 10 clients with names "device0", "device1", ..., "device9"
+* each client will send a message every 0.5 seconds
+* the default broker ip (127.0.0.1) and port (1883) are used
+
+
+
+The same but also specifying a different broker:
+```
+python sim_clients.py -c 10 -n device -i 0.5 --broker-ip 192.168.2.96 --broker-port 1884
+```
+
 ### Message structure
 Each client will send a message with the following structure:
 ```
@@ -34,23 +51,6 @@ Here's an example:
     "param1": 27, 
     "param2": 0.8243972510356947
 }
-```
-
-## Examples:
-The following:
-```
-python sim_clients.py -c 10 -n device -i 0.5
-```
-will:
-* create 10 clients with names "device0", "device1", ..., "device9"
-* each client will send a message every 0.5 seconds
-* the default broker ip (127.0.0.1) and port (1883) are used
-
-
-
-The same but also specifying a different broker:
-```
-python sim_clients.py -c 10 -n device -i 0.5 --broker-ip 192.168.2.96 --broker-port 1884
 ```
 
 ## Pre-requisites
