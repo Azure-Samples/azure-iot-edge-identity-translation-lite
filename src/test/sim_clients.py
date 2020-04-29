@@ -90,7 +90,6 @@ for client in clients:
     client.loop_start() #starts the client
 
 while True:
-    time.sleep(period)
     r = random.randint(0,clients_num-1)
 
     client = clients[r]
@@ -101,3 +100,4 @@ while True:
     }
     client.publish(topic, json.dumps(payload))
     print("sending topic={},payload={}", topic, json.dumps(payload))
+    time.sleep(period)
