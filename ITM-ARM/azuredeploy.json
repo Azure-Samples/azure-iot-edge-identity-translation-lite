@@ -16,11 +16,26 @@
                 "description": "Name for your IotHub"
             }
         },
+        "sites_LeafEventFunction_externalid": {
+            "defaultValue": "[concat('/subscriptions/',subscription().id,'/resourceGroups/',resourceGroup().name,'/providers/Microsoft.Web/sites/')]",
+            "type": "String"
+        },
+        "systemTopics_ITLiteIoTHub_cae45872_49ab_48cf_a322_7879f4a0528f_name": {
+            "defaultValue": "ITLiteIoTHub-cae45872-49ab-48cf-a322-7879f4a0528f",
+            "type": "String"
+        },
         "functionName": {
             "defaultValue": "LeafDeviceCloudEventGrid",
             "type": "String",
             "metadata": {
                 "description": "Function App Name"
+            }
+        },
+        "siteName": {
+            "defaultValue": "[concat('FuncApp-', uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "The name of you Web Site."
             }
         },
         "location": {
@@ -170,7 +185,7 @@
         },
         {
             "type": "Microsoft.Devices/IotHubs/providers/eventSubscriptions",
-            "apiVersion": "2018-01-01",
+            "apiVersion": "2020-01-01-preview",
             "name": "[concat(parameters('IoTHubname'), '/Microsoft.EventGrid/', 'LeafEventGridSubscription')]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -180,9 +195,9 @@
             "properties": {
                 "destination": {
                     "properties": {
-                        "endpointUrl": "[concat(variables('functionUrl'), listKeys(resourceId('Microsoft.Web/sites/host/', variables('funcAppName'), 'default'),'2016-08-01').systemkeys.eventgrid_extension)]"
+						"resourceId": "[resourceId('Microsoft.Web/sites/functions/', variables('funcAppName'), parameters('FunctionName'))]"
                     },
-                    "endpointType": "WebHook"
+                    "endpointType": "AzureFunction"
                 },
                 "filter": {
                     "includedEventTypes": [
