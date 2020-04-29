@@ -1,0 +1,417 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "defaultValue": "EdgeVM",
+            "type": "String",
+            "metadata": {
+                "description": "The name of you Virtual Machine!!"
+            }
+        },
+        "IoTHubname": {
+            "defaultValue": "[concat('IoThub', uniqueString(resourceGroup().id))]",
+            "type": "String",
+            "metadata": {
+                "description": "Name for your IotHub"
+            }
+        },
+        "functionName": {
+            "defaultValue": "LeafDeviceCloudEventGrid",
+            "type": "String",
+            "metadata": {
+                "description": "Function App Name"
+            }
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "String",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "VmSize": {
+            "allowedValues": [
+                "Standard_B1ls",
+                "Standard_B1s",
+                "Standard_B1ms",
+                "Standard_B2s",
+                "Standard_B2ms",
+                "Standard_B4ms",
+                "Standard_B8ms",
+                "Standard_B12ms",
+                "Standard_B16ms",
+                "Standard_B20ms"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "The size of the VM"
+            }
+        },
+        "adminUsername": {
+            "type": "String",
+            "metadata": {
+                "description": "Username for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Password for the Virtual Machine. The password must be at least 12 characters long and have lower case, upper characters, digit and a special character (Regex match)"
+            }
+        },
+        "virtualNetworkName": {
+            "defaultValue": "vNet",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the VNET"
+            }
+        },
+        "subnetName": {
+            "defaultValue": "Subnet",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the subnet in the virtual network"
+            }
+        },
+        "networkSecurityGroupName": {
+            "defaultValue": "SecGroupNet",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the Network Security Group"
+            }
+        },
+        "IoTsku_name": {
+            "defaultValue": "S1",
+            "type": "String",
+            "metadata": {
+                "description": "The SKU for the IoT hub to use"
+            }
+        },
+        "IoTsku_units": {
+            "defaultValue": "1",
+            "type": "String",
+            "metadata": {
+                "description": "This is linked to the SKU"
+            }
+        },
+        "IoTsku_partitions": {
+            "defaultValue": "4",
+            "type": "String",
+            "metadata": {
+                "description": "This is linked to the SKU"
+            }
+        },
+        "baseName": {
+            "defaultValue": "LeafDevice",
+            "type": "String",
+            "metadata": {
+                "description": "Name use as base-template to named the resources deployed in Azure."
+            }
+        },
+        "GitHubBranch": {
+            "defaultValue": "master",
+            "type": "String",
+            "metadata": {
+                "description": "Name of the branch to use when deploying (Default = master)."
+            }
+        }
+    },
+    "variables": {
+        "networkInterfaceName": "[concat(parameters('vmName'),'NetInt')]",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName'))]",
+        "publicIpAddressName": "[concat(parameters('vmName'), 'PublicIP' )]",
+        "osDiskType": "Standard_LRS",
+        "subnetAddressPrefix": "10.1.0.0/24",
+        "addressPrefix": "10.1.0.0/16",
+        "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)),0,5)]",
+        "funcAppName": "[toLower(concat(parameters('baseName'), variables('suffix')))]",
+        "funcStorageName": "[tolower(concat(substring(parameters('baseName'), 0, min(length(parameters('baseName')),16)), 'stg', variables('suffix')))]",
+        "serverFarmName": "[concat(substring(parameters('baseName'), 0, min(length(parameters('baseName')),14)), '-srv-', variables('suffix'))]",
+        "repoURL": "https://github.com/myamama/ITM-LeafEventAzFn.git",
+        "functionUrl": "[concat('https://', variables('funcAppName'),'.azurewebsites.net/runtime/webhooks/eventgrid?functionName=', parameters('FunctionName'),'&code=')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Devices/IotHubs",
+            "apiVersion": "2019-03-22",
+            "name": "[parameters('IoTHubname')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName'))]"
+            ],
+            "sku": {
+                "name": "[parameters('IoTsku_name')]",
+                "capacity": "[parameters('IoTsku_units')]"
+            },
+            "properties": {
+                "eventHubEndpoints": {
+                    "events": {
+                        "retentionTimeInDays": 1,
+                        "partitionCount": "[parameters('IoTsku_partitions')]"
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Devices/IotHubs/providers/eventSubscriptions",
+            "apiVersion": "2018-01-01",
+            "name": "[concat(parameters('IoTHubname'), '/Microsoft.EventGrid/', 'LeafEventGridSubscription')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Devices/IotHubs', parameters('IoTHubname'))]",
+                "[resourceId('Microsoft.Web/sites/', variables('funcAppName'))]"
+            ],
+            "properties": {
+                "destination": {
+                    "properties": {
+                        "endpointUrl": "[concat(variables('functionUrl'), listKeys(resourceId('Microsoft.Web/sites/host/', variables('funcAppName'), 'default'),'2016-08-01').systemkeys.eventgrid_extension)]"
+                    },
+                    "endpointType": "WebHook"
+                },
+                "filter": {
+                    "includedEventTypes": [
+                        "Microsoft.Devices.DeviceTelemetry"
+                    ]
+                },
+                "labels": [],
+                "eventDeliverySchema": "EventGridSchema",
+                "retryPolicy": {
+                    "maxDeliveryAttempts": 30,
+                    "eventTimeToLiveInMinutes": 1440
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('networkInterfaceName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[resourceId('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups',parameters('networkSecurityGroupName'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2019-02-01",
+            "name": "[parameters('networkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "priority": 300,
+                            "protocol": "TCP",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourceAddressPrefix": "*",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*",
+                            "destinationPortRange": "22"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2019-04-01",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-02-01",
+            "name": "[variables('publicIpAddressName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Basic"
+            },
+            "properties": {
+                "publicIpAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2019-03-01",
+            "name": "[parameters('vmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+                "[concat('Microsoft.Devices/IotHubs/', parameters('IoTHubname'))]"
+            ],
+            "plan": {
+                "name": "ubuntu_1604_edgeruntimeonly",
+                "publisher": "microsoft_iot_edge",
+                "product": "iot_edge_vm_ubuntu"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('VmSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "createOption": "fromImage",
+                        "managedDisk": {
+                            "storageAccountType": "[variables('osDiskType')]"
+                        }
+                    },
+                    "imageReference": {
+                        "publisher": "microsoft_iot_edge",
+                        "offer": "iot_edge_vm_ubuntu",
+                        "sku": "ubuntu_1604_edgeruntimeonly",
+                        "version": "1.0.1"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2015-08-01",
+            "name": "[variables('funcAppName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms',variables('serverFarmName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName'))]"
+            ],
+            "kind": "functionapp",
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('funcStorageName'), ';AccountKey=', listKeys(variables('funcStorageName'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('funcStorageName'), ';AccountKey=', listKeys(variables('funcStorageName'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('funcStorageName'), ';AccountKey=', listKeys(variables('funcStorageName'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[variables('funcAppName')]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~2"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "dotnet"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "sourcecontrols",
+                    "apiVersion": "2015-08-01",
+                    "name": "web",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites/', variables('funcAppName'))]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "[variables('repoURL')]",
+                        "branch": "[parameters('GitHubBranch')]",
+                        "publishRunbook": true,
+                        "IsManualIntegration": true
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2018-07-01",
+            "name": "[variables('funcStorageName')]",
+            "location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "funStorageName"
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "StorageV2"
+        },
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2018-02-01",
+            "name": "[variables('serverFarmName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic"
+            },
+            "properties": {
+                "name": "[variables('serverFarmName')]",
+                "computeMode": "Dynamic"
+            }
+        }
+    ],
+    "outputs": {
+        "adminUsername": {
+            "type": "String",
+            "value": "[parameters('adminUsername')]"
+        },
+        "funcStorageName": {
+            "type": "String",
+            "value": "[variables('funcStorageName')]"
+        },
+        "return": {
+            "type": "String",
+            "value": "[concat(variables('functionUrl'), listKeys(resourceId('Microsoft.Web/sites/host/', variables('funcAppName'), 'default'),'2016-08-01').systemkeys.eventgrid_extension)]"
+        }
+    }
+}
