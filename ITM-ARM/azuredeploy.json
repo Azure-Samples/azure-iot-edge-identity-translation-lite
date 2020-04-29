@@ -115,6 +115,19 @@
             "metadata": {
                 "description": "Name of the branch to use when deploying (Default = master)."
             }
+        },
+        "storageAccountType": {
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS",
+                "Premium_LRS"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Storage Account type"
+            }
         }
     },
     "variables": {
@@ -124,6 +137,8 @@
         "osDiskType": "Standard_LRS",
         "subnetAddressPrefix": "10.1.0.0/24",
         "addressPrefix": "10.1.0.0/16",
+        "hostingPlanName": "[concat('hpn-', resourceGroup().name)]",
+        "storageAccountName": "[concat('store', uniquestring(resourceGroup().id))]",
         "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)),0,5)]",
         "funcAppName": "[toLower(concat(parameters('baseName'), variables('suffix')))]",
         "funcStorageName": "[tolower(concat(substring(parameters('baseName'), 0, min(length(parameters('baseName')),16)), 'stg', variables('suffix')))]",
