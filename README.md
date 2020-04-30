@@ -29,6 +29,7 @@ Outline the file contents of the repository. It helps users navigate the codebas
 |-------------------|--------------------------------------------|
 | `src`             | Sample source code.                        |
 | `docs`            | Folder with docs and media files.          |
+| `deploy`          | Folder with deployment scripts.            |
 | `.gitignore`      | Define what to ignore at commit time.      |
 | `CHANGELOG.md`    | List of changes to the sample.             |
 | `CONTRIBUTING.md` | Guidelines for contributing to the sample. |
@@ -48,7 +49,7 @@ Explain how to prepare the sample once the user clones or downloads the reposito
 
 Automated sample setup:
 1. Clone this repo.
-2. 
+2. __ADD REFERENCE TO DEPLOYMENT SCRIT__
 
 There is also an option to setting up everything manually, including building the container images. You can find a [step-by-step guide here](/docs/stepbystep.md).
 
