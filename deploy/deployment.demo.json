@@ -35,7 +35,7 @@
             "status": "running",
             "restartPolicy": "always",
             "settings": {
-              "image": "azureiot/identitytranslationlite:0.1.0-amd64",
+              "image": "azureiotedgecommunity/identitytranslationlite:0.1.0-amd64",
               "createOptions": "{}"
             }
           },
@@ -45,7 +45,7 @@
             "status": "running",
             "restartPolicy": "always",
             "settings": {
-              "image": "azureiot/ptm-mqtt:0.1.0-amd64",
+              "image": "azureiotedgecommunity/ptm-mqtt:0.1.0-amd64",
               "createOptions": "{\"NetworkingConfig\":{\"EndpointsConfig\":{\"host\":{}}},\"HostConfig\":{\"NetworkMode\":\"host\"}}"
             }
           },
