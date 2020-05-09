@@ -5,7 +5,7 @@
 The following resources will be created:
 
 - 1 Ubuntu VMs of size _Standard B2ms_
-- 1 x IoT Hub of size _F1 - Free_
+- 1 x IoT Hub of size _S1 - Standard_
 - 1 x Azure Function
 - __TODO ADD MORE?__
 
