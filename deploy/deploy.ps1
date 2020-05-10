@@ -288,7 +288,7 @@ Function Deploy-IoTEdgeConfiguration(){
     $templateManifest = Join-Path $ScriptDir "deployment.demo.json"
     $body = Get-Content -Raw -Path $templateManifest
 
-    ##TODO document why doing through REST API and github issue for missing Cmdlet in AZ
+    ##Currently doing call to REST API as AZ module does not yet support 'applyconfiguration' for edge 
     
     $resourceUri = "$iotHubName.azure-devices.net/devices/$([System.Web.HttpUtility]::UrlEncode($edgeVmName))"
 
