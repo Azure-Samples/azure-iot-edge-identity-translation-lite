@@ -289,6 +289,7 @@ Function Deploy-IoTEdgeConfiguration(){
     $body = Get-Content -Raw -Path $templateManifest
 
     ##Currently doing call to REST API as AZ module does not yet support 'applyconfiguration' for edge 
+
     
     $resourceUri = "$iotHubName.azure-devices.net/devices/$([System.Web.HttpUtility]::UrlEncode($edgeVmName))"
 
