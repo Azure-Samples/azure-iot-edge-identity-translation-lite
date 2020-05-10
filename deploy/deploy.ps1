@@ -120,7 +120,7 @@ Function New-Password() {
 # Deploy azuredeploy.json
 #*******************************************************************************************************
 Function New-Deployment() {
-    [OutputType([Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroupDeployment])]
+    [OutputType([System.Object[]])]
     Param($context)
 
     $templateParameters = @{ }
@@ -214,7 +214,7 @@ Function New-Deployment() {
 }
 
 Function New-IoTEdgeDevice() {
-    Param([Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroupDeployment] $deployment)
+    Param([System.Object[]] $deployment)
 
     Write-Host "Registering IoT Edge Device..."
 
@@ -276,7 +276,7 @@ Function New-SASToken
 
 
 Function Deploy-IoTEdgeConfiguration(){
-    Param([Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroupDeployment] $deployment)
+    Param([System.Object[]] $deployment)
 
     Write-Host "Pushing new deployment to IoT Edge Device..."
 
@@ -285,7 +285,7 @@ Function Deploy-IoTEdgeConfiguration(){
     $edgeVmName = $deployment.Outputs["edgeVmName"].Value
     $ownerkey = (Get-AzIotHubKey -ResourceGroupName $script:ResourceGroupName -Name $iotHubName -KeyName $keyName).PrimaryKey
 
-    $templateManifest = Join-Path $ScriptDir "deployment.dmo.json"
+    $templateManifest = Join-Path $ScriptDir "deployment.demo.json"
     $body = Get-Content -Raw -Path $templateManifest
 
     ##TODO document why doing through REST API and github issue for missing Cmdlet in AZ

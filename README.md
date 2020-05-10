@@ -31,19 +31,15 @@ This sample is a 'lite' implementation of the Identity Translation pattern as it
 - An Azure account and access to a subscription where you can provision new resources (IoT Hub, Functions, Storage, Container Registry).
 - Visual Studio Code if you want to run any parts of the sample locally.
 - Docker Desktop for building the container modules (if not using the pre-built images).
+- Azure Powershell az if you are running the automated sample.
 
 ## Setup
 
-Explain how to prepare the sample once the user clones or downloads the repository. The section should outline every step necessary to install dependencies and set up any settings (for example, API keys and output folders).
+There are two ways of setting up a running demo:
 
-Automated sample setup can be found [here](/ITM-ARM/README.md).
+- Automated sample setup can be found [here](/ITM-ARM/README.md).
+- There is also an option to setting up everything manually, including building the container images. You can find a [step-by-step guide here](/docs/stepbystep.md).
 
-There is also an option to setting up everything manually, including building the container images. You can find a [step-by-step guide here](/docs/stepbystep.md).
-
-
-## Running the sample
-
-Outline step-by-step instructions to execute the sample and see its output. Include steps for executing the sample from the IDE, starting specific services in the Azure portal or anything related to the overall launch of the code.
 
 ## Key concepts
 
@@ -52,6 +48,13 @@ For this Identity Translation Lite sample we are relying on a protocol translati
 The solution also comprises of a cloud section that takes care of provisioning the device on the IoT Hub and assigning it as a child of the IoT Edge device. To prevent any type of child device to be provisioned, there is a whitelisting file that validates whether the child device can be provisioned. This cloud solution leverages an [Azure Function](docs/functions.md) that gets triggered by an Event Grid subscription.
 
 ![Registration flow diagram](docs/media/registrationflow.png)
+
+## Sample setup flow
+
+The sample setup flow uses an unsecure MQTT broker connection to interact with clients (represented by a Python script). 
+
+![Sample flow diagram](docs/media/sampleflow.png)
+
 
 ## Contributing
 
