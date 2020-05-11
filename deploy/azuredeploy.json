@@ -183,35 +183,36 @@
                 }
             }
         },
-        // {
-        //     "type": "Microsoft.Devices/IotHubs/providers/eventSubscriptions",
-        //     "apiVersion": "2020-01-01-preview",
-        //     "name": "[concat(parameters('IoTHubname'), '/Microsoft.EventGrid/', 'LeafEventGridSubscription')]",
-        //     "location": "[parameters('location')]",
-        //     "dependsOn": [
-        //         "[resourceId('Microsoft.Devices/IotHubs', parameters('IoTHubname'))]",
-        //         "[resourceId('Microsoft.Web/sites/', variables('funcAppName'))]"
-        //     ],
-        //     "properties": {
-        //         "destination": {
-        //             "properties": {
-		// 				"resourceId": "[resourceId('Microsoft.Web/sites/functions/', variables('funcAppName'), parameters('FunctionName'))]"
-        //             },
-        //             "endpointType": "AzureFunction"
-        //         },
-        //         "filter": {
-        //             "includedEventTypes": [
-        //                 "Microsoft.Devices.DeviceTelemetry"
-        //             ]
-        //         },
-        //         "labels": [],
-        //         "eventDeliverySchema": "EventGridSchema",
-        //         "retryPolicy": {
-        //             "maxDeliveryAttempts": 30,
-        //             "eventTimeToLiveInMinutes": 1440
-        //         }
-        //     }
-        // },
+	{
+            "type": "Microsoft.Devices/IotHubs/providers/eventSubscriptions",
+            "apiVersion": "2020-01-01-preview",
+            "name": "[concat(parameters('IoTHubname'), '/Microsoft.EventGrid/', 'LeafEventGridSubscription')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Devices/IotHubs', parameters('IoTHubname'))]",
+                "[resourceId('Microsoft.Web/sites/', variables('funcAppName'))]",
+                "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('funcAppName'), 'web')]"
+            ],
+            "properties": {
+                "destination": {
+                    "properties": {
+						"resourceId": "[resourceId('Microsoft.Web/sites/functions/', variables('funcAppName'), parameters('FunctionName'))]"
+                    },
+                    "endpointType": "AzureFunction"
+                },
+                "filter": {
+                    "includedEventTypes": [
+                        "Microsoft.Devices.DeviceTelemetry"
+                    ]
+                },
+                "labels": [],
+                "eventDeliverySchema": "EventGridSchema",
+                "retryPolicy": {
+                    "maxDeliveryAttempts": 30,
+                    "eventTimeToLiveInMinutes": 1440
+                }
+            }
+        },
         {
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2019-07-01",
