@@ -120,7 +120,7 @@ Function New-Password() {
 # Deploy azuredeploy.json
 #*******************************************************************************************************
 Function New-Deployment() {
-    [OutputType([Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroupDeployment])]
+    [OutputType([System.Object[]])]
     Param($context)
 
     $templateParameters = @{ }
@@ -169,6 +169,9 @@ Function New-Deployment() {
                 Write-Host
             }
 
+            # Accept terms for ARM marketplace IoT Edge machine
+            Get-AzMarketplaceTerms -Publisher "microsoft_iot_edge" -Product "iot_edge_vm_ubuntu" -Name "ubuntu_1604_edgeruntimeonly" | Set-AzMarketplaceTerms -Accept
+
             # Start the deployment
             $templateFilePath = Join-Path $ScriptDir "azuredeploy.json"
             $deployment = New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
@@ -211,7 +214,7 @@ Function New-Deployment() {
 }
 
 Function New-IoTEdgeDevice() {
-    Param([Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels.PSResourceGroupDeployment] $deployment)
+    Param([System.Object[]] $deployment)
 
     Write-Host "Registering IoT Edge Device..."
 
@@ -240,6 +243,79 @@ Function New-IoTEdgeDevice() {
     Write-Host "Successfully provisioned Edge Device!"
 }
 
+
+Function New-SASToken
+{
+    Param(
+        [Parameter(Mandatory=$True)]
+        [string]$ResourceUri,
+        [Parameter(Mandatory=$True)]
+        [string]$Key,
+        [string]$KeyName="",
+        [int]$TokenTimeOut=1800 # in seconds
+    )
+    [Reflection.Assembly]::LoadWithPartialName("System.Web") | out-null
+   
+    $Expires = ([DateTimeOffset]::Now.ToUnixTimeSeconds())+$TokenTimeOut
+    
+    $SignatureString=[System.Web.HttpUtility]::UrlEncode($ResourceUri)+ "`n" + [string]$Expires
+    $HMAC = New-Object System.Security.Cryptography.HMACSHA256
+    $HMAC.key = [Convert]::FromBase64String($Key)
+    $Signature = $HMAC.ComputeHash([Text.Encoding]::ASCII.GetBytes($SignatureString))
+    $Signature = [Convert]::ToBase64String($Signature)
+
+    $SASToken = "SharedAccessSignature sr=" + [System.Web.HttpUtility]::UrlEncode($ResourceUri) + "&sig=" `
+                 + [System.Web.HttpUtility]::UrlEncode($Signature) + "&se=" + $Expires
+    
+    if ($KeyName -ne "")
+    {
+        $SASToken=$SASToken+"&skn=$KeyName"
+    }
+    return $SASToken
+}
+
+
+Function Deploy-IoTEdgeConfiguration(){
+    Param([System.Object[]] $deployment)
+
+    Write-Host "Pushing new deployment to IoT Edge Device..."
+
+    $keyName = "iothubowner"
+    $iotHubName = $deployment.Outputs["iotHubName"].Value
+    $edgeVmName = $deployment.Outputs["edgeVmName"].Value
+    $ownerkey = (Get-AzIotHubKey -ResourceGroupName $script:ResourceGroupName -Name $iotHubName -KeyName $keyName).PrimaryKey
+
+    $templateManifest = Join-Path $ScriptDir "deployment.demo.json"
+    $body = Get-Content -Raw -Path $templateManifest
+
+    ##Currently doing call to REST API as AZ module does not yet support 'applyconfiguration' for edge 
+
+    
+    $resourceUri = "$iotHubName.azure-devices.net/devices/$([System.Web.HttpUtility]::UrlEncode($edgeVmName))"
+
+    [Reflection.Assembly]::LoadWithPartialName("System.Web") | out-null
+
+    try
+    {
+        
+        $sas = New-SASToken -ResourceUri $resourceUri -Key $ownerkey -KeyName $keyName
+        
+        $webRequest = Invoke-WebRequest -Method POST `
+            -Uri "https://$resourceUri/applyConfigurationContent?api-version=2019-10-01" `
+            -ContentType "application/json" -Header @{ Authorization = $sas} -Body $body -UseBasicParsing
+
+        Write-Host "Successfully pushed deployment to IoT Edge Device!"
+
+    } 
+    catch [System.Net.WebException]
+    {
+        Write-Error "An exception was caught: $($_.Exception.Message)"
+    }
+
+}
+
+
+
 #*******************************************************************************************************
 # Script body
 #*******************************************************************************************************
@@ -261,3 +337,5 @@ $script:context = Select-Context -context $script:context
 $script:deleteOnErrorPrompt = Select-ResourceGroup
 $script:deployment = New-Deployment -context $script:context
 New-IoTEdgeDevice $script:deployment
+Deploy-IoTEdgeConfiguration $script:deployment
+

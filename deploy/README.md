@@ -4,18 +4,24 @@
 
 The following resources will be created:
 
-- 1 Ubuntu VMs of size _Standard B2ms_
+- 1 Ubuntu VMs of size _Standard B2ms_ for hosting the IoT Edge Gateway
 - 1 x IoT Hub of size _S1 - Standard_
 - 1 x Azure Function
-- __TODO ADD MORE?__
+- 1 x Azure Storage for dependencies
+
+Once provisioning of resources is complete, the script will configure the IoT Edge gateway on the Ubuntu VM. Finally it deploys the deployment manifest which contains the sample Identity Translation Lite module, a protocol translation module and a mosquito broker.
 
 ## Prerequisites
 
-Deployment is done by a __PowerShell script__ which uses the [Az PowerShell module](https://docs.microsoft.com/en-us/powershell/azure/new-azureps-module-az?view=azps-3.7.0) _*Version 3.7.0*_.  
-Make sure you have installed this module using [instructions here](https://docs.microsoft.com/en-us/powershell/azure/install-az-ps?view=azps-3.7.0#install-the-azure-powershell-module)
+Deployment is done by a __PowerShell script__ which uses the [Az PowerShell module](https://docs.microsoft.com/en-us/powershell/azure/new-azureps-module-az?view=azps-3.8.0) _*Version 3.8.0*_.  
+Make sure you have installed this module using [instructions here](https://docs.microsoft.com/en-us/powershell/azure/install-az-ps?view=azps-3.8.0#install-the-azure-powershell-module)
 
 ## Run Deployment
 
 ```powershell
 .\deploy.ps1
 ```
+
+## Run sample client script
+
+TODO
