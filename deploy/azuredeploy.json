@@ -440,10 +440,10 @@
             "type": "String",
             "value": "[variables('funcStorageName')]"
         },
-        // "return": {
-        //     "type": "String",
-        //     "value": "[concat(variables('functionUrl'), listKeys(resourceId('Microsoft.Web/sites/host/', variables('funcAppName'), 'default'),'2016-08-01').systemkeys.eventgrid_extension)]"
-        // },
+        "return": {
+            "type": "String",
+            "value": "[resourceId('Microsoft.Web/sites/functions/', variables('funcAppName'), parameters('functionName'))]"
+        },
         "iotHubName": {
             "type": "string",
             "value": "[parameters('IoTHubname')]"
