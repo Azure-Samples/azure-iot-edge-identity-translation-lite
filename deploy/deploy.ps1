@@ -5,6 +5,52 @@ Param(
     $context = $null
 )
 
+function Retry-Command {
+    [CmdletBinding()]
+    param (
+        [parameter(Mandatory, ValueFromPipeline)] 
+        [ValidateNotNullOrEmpty()]
+        [scriptblock] $ScriptBlock,
+        [int] $RetryCount = 3,
+        [int] $TimeoutInSecs = 30,
+        [string] $SuccessMessage = "Command executed successfuly!",
+        [string] $FailureMessage = "Failed to execute the command"
+        )
+        
+    process {
+        $Attempt = 1
+        $Flag = $true
+        
+        do {
+            try {
+                $PreviousPreference = $ErrorActionPreference
+                $ErrorActionPreference = 'Stop'
+                Invoke-Command -ScriptBlock $ScriptBlock -OutVariable Result              
+                $ErrorActionPreference = $PreviousPreference
+
+                # flow control will execute the next line only if the command in the scriptblock executed without any errors
+                # if an error is thrown, flow control will go to the 'catch' block
+                Write-Verbose "$SuccessMessage `n"
+                $Flag = $false
+            }
+            catch {
+                if ($Attempt -gt $RetryCount) {
+                    Write-Verbose "$FailureMessage! Total retry attempts: $RetryCount"
+                    Write-Verbose "[Error Message] $($_.exception.message) `n"
+                    $Flag = $false
+                }
+                else {
+                    Write-Verbose "[$Attempt/$RetryCount] $FailureMessage. Retrying in $TimeoutInSecs seconds..."
+                    Start-Sleep -Seconds $TimeoutInSecs
+                    $Attempt = $Attempt + 1
+                }
+            }
+        }
+        While ($Flag)
+        
+    }
+}
+
 Function Select-Context() {
     [OutputType([Microsoft.Azure.Commands.Profile.Models.Core.PSAzureContext])]
     Param([Microsoft.Azure.Commands.Profile.Models.Core.PSAzureContext] $context)
@@ -216,66 +262,83 @@ Function New-Deployment() {
 Function New-IoTEdgeDevice() {
     Param([System.Object[]] $deployment)
 
-    Write-Host "Registering IoT Edge Device..."
+    try {
+        Write-Host "Registering IoT Edge Device..."
 
-    $dummydevice = "itsdemomdummy"
-    $iotHubName = $deployment.Outputs["iotHubName"].Value
-    $edgeVmName = $deployment.Outputs["edgeVmName"].Value
+        $dummydevice = "itsdemomdummy"
+        $iotHubName = $deployment.Outputs["iotHubName"].Value
+        $edgeVmName = $deployment.Outputs["edgeVmName"].Value
 
-    # Need to create a dummy child device because there is a bug in Add-AzIotHubDevice command
-    # https://github.com/Azure/azure-powershell/issues/11597
-    Add-AzIotHubDevice -ResourceGroupName $script:ResourceGroupName `
-        -IotHubName $iotHubName -DeviceId $dummydevice -AuthMethod "shared_private_key"
+        # Need to create a dummy child device because there is a bug in Add-AzIotHubDevice command
+        # https://github.com/Azure/azure-powershell/issues/11597
+        Add-AzIotHubDevice -ResourceGroupName $script:ResourceGroupName `
+            -IotHubName $iotHubName -DeviceId $dummydevice -AuthMethod "shared_private_key"
 
-    Add-AzIotHubDevice -ResourceGroupName $script:ResourceGroupName `
-        -IotHubName $iotHubName -DeviceId $edgeVmName `
-        -AuthMethod "shared_private_key" -Children $dummydevice -EdgeEnabled
+        Add-AzIotHubDevice -ResourceGroupName $script:ResourceGroupName `
+            -IotHubName $iotHubName -DeviceId $edgeVmName `
+            -AuthMethod "shared_private_key" -Children $dummydevice -EdgeEnabled
 
-    Write-Host "Providing Device ConnectionString to VM..."
-    
-    $edgeConnectionString = $(Get-AzIotHubDCS -ResourceGroupName $script:ResourceGroupName `
-            -IotHubName $iotHubName -DeviceId $edgeVmName -KeyType primary).ConnectionString
+        Write-Host "Providing Device ConnectionString to VM..."
+        
+        $edgeConnectionString = $(Get-AzIotHubDCS -ResourceGroupName $script:ResourceGroupName `
+                -IotHubName $iotHubName -DeviceId $edgeVmName -KeyType primary).ConnectionString
 
-    Invoke-AzVMRunCommand -ResourceGroupName $script:ResourceGroupName `
-        -VMName $edgeVmName -CommandId "RunShellScript" `
-        -ScriptPath "configedge.sh" -Parameter @{param1 = "'$edgeConnectionString'" }
+        Invoke-AzVMRunCommand -ResourceGroupName $script:ResourceGroupName `
+            -VMName $edgeVmName -CommandId "RunShellScript" `
+            -ScriptPath "configedge.sh" -Parameter @{param1 = "'$edgeConnectionString'" }
 
-    Write-Host "Successfully provisioned Edge Device!"
+        Write-Host "Successfully provisioned Edge Device!"
+    }
+    catch {
+        Write-Error "Failed to create IoT Edge Device $($_.Exception.Message)"
+    }
 }
 
+Function New-EventGridRouteFilter() {
+    Param([System.Object[]] $deployment)
 
-Function New-SASToken
-{
+    Write-Host "Creating filter for built in EventGrid route..."
+
+    try {
+        $iotHubName = $deployment.Outputs["iotHubName"].Value
+        Set-AzIotHubRoute -ResourceGroupName $script:ResourceGroupName `
+            -Name $iotHubName -RouteName "RouteToEventGrid" -Condition "itmtype = 'LeafEvents'"
+    }
+    catch {
+        Write-Error "Failed to create a filter for the built in EventGrid route. $($_.Exception.Message)"
+    }
+}
+
+Function New-SASToken {
     Param(
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory = $True)]
         [string]$ResourceUri,
-        [Parameter(Mandatory=$True)]
+        [Parameter(Mandatory = $True)]
         [string]$Key,
-        [string]$KeyName="",
-        [int]$TokenTimeOut=1800 # in seconds
+        [string]$KeyName = "",
+        [int]$TokenTimeOut = 1800 # in seconds
     )
     [Reflection.Assembly]::LoadWithPartialName("System.Web") | out-null
    
-    $Expires = ([DateTimeOffset]::Now.ToUnixTimeSeconds())+$TokenTimeOut
+    $Expires = ([DateTimeOffset]::Now.ToUnixTimeSeconds()) + $TokenTimeOut
     
-    $SignatureString=[System.Web.HttpUtility]::UrlEncode($ResourceUri)+ "`n" + [string]$Expires
+    $SignatureString = [System.Web.HttpUtility]::UrlEncode($ResourceUri) + "`n" + [string]$Expires
     $HMAC = New-Object System.Security.Cryptography.HMACSHA256
     $HMAC.key = [Convert]::FromBase64String($Key)
     $Signature = $HMAC.ComputeHash([Text.Encoding]::ASCII.GetBytes($SignatureString))
     $Signature = [Convert]::ToBase64String($Signature)
 
     $SASToken = "SharedAccessSignature sr=" + [System.Web.HttpUtility]::UrlEncode($ResourceUri) + "&sig=" `
-                 + [System.Web.HttpUtility]::UrlEncode($Signature) + "&se=" + $Expires
+        + [System.Web.HttpUtility]::UrlEncode($Signature) + "&se=" + $Expires
     
-    if ($KeyName -ne "")
-    {
-        $SASToken=$SASToken+"&skn=$KeyName"
+    if ($KeyName -ne "") {
+        $SASToken = $SASToken + "&skn=$KeyName"
     }
+
     return $SASToken
 }
 
-
-Function Deploy-IoTEdgeConfiguration(){
+Function New-IoTEdgeConfiguration() {
     Param([System.Object[]] $deployment)
 
     Write-Host "Pushing new deployment to IoT Edge Device..."
@@ -289,32 +352,24 @@ Function Deploy-IoTEdgeConfiguration(){
     $body = Get-Content -Raw -Path $templateManifest
 
     ##Currently doing call to REST API as AZ module does not yet support 'applyconfiguration' for edge 
-
     
     $resourceUri = "$iotHubName.azure-devices.net/devices/$([System.Web.HttpUtility]::UrlEncode($edgeVmName))"
 
     [Reflection.Assembly]::LoadWithPartialName("System.Web") | out-null
 
-    try
-    {
-        
+    try {
         $sas = New-SASToken -ResourceUri $resourceUri -Key $ownerkey -KeyName $keyName
         
-        $webRequest = Invoke-WebRequest -Method POST `
+        Invoke-WebRequest -Method POST `
             -Uri "https://$resourceUri/applyConfigurationContent?api-version=2019-10-01" `
-            -ContentType "application/json" -Header @{ Authorization = $sas} -Body $body -UseBasicParsing
+            -ContentType "application/json" -Header @{ Authorization = $sas } -Body $body -UseBasicParsing
 
         Write-Host "Successfully pushed deployment to IoT Edge Device!"
-
     } 
-    catch [System.Net.WebException]
-    {
-        Write-Error "An exception was caught: $($_.Exception.Message)"
+    catch [System.Net.WebException] {
+        Write-Error "Error creating IoT Edge deployment $($_.Exception.Message)"
     }
-
 }
-
-
 
 #*******************************************************************************************************
 # Script body
@@ -336,6 +391,9 @@ Import-Module Az
 $script:context = Select-Context -context $script:context
 $script:deleteOnErrorPrompt = Select-ResourceGroup
 $script:deployment = New-Deployment -context $script:context
-New-IoTEdgeDevice $script:deployment
-Deploy-IoTEdgeConfiguration $script:deployment
+
+# Using Retries since IoT Hub is in "Transitioning" state for a while it automatically adds RouteToEventGrid route
+{New-EventGridRouteFilter $script:deployment} | Retry-Command -TimeoutInSecs 20 -Verbose -RetryCount 5
+{New-IoTEdgeDevice $script:deployment} | Retry-Command -TimeoutInSecs 20 -Verbose -RetryCount 5
+{New-IoTEdgeConfiguration $script:deployment} | Retry-Command -TimeoutInSecs 20 -Verbose -RetryCount 5
 
