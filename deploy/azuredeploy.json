@@ -1,5 +1,5 @@
 {
-        "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "vmName": {
@@ -16,26 +16,11 @@
                 "description": "Name for your IotHub"
             }
         },
-        "sites_LeafEventFunction_externalid": {
-            "defaultValue": "[concat('/subscriptions/',subscription().id,'/resourceGroups/',resourceGroup().name,'/providers/Microsoft.Web/sites/')]",
-            "type": "String"
-        },
-        "systemTopics_ITLiteIoTHub_cae45872_49ab_48cf_a322_7879f4a0528f_name": {
-            "defaultValue": "ITLiteIoTHub-cae45872-49ab-48cf-a322-7879f4a0528f",
-            "type": "String"
-        },
         "functionName": {
             "defaultValue": "LeafDeviceCloudEventGrid",
             "type": "String",
             "metadata": {
                 "description": "Function App Name"
-            }
-        },
-        "siteName": {
-            "defaultValue": "[concat('FuncApp-', uniqueString(resourceGroup().id))]",
-            "type": "String",
-            "metadata": {
-                "description": "The name of you Web Site."
             }
         },
         "location": {
@@ -130,19 +115,6 @@
             "metadata": {
                 "description": "Name of the branch to use when deploying (Default = master)."
             }
-        },
-        "storageAccountType": {
-            "defaultValue": "Standard_LRS",
-            "allowedValues": [
-                "Standard_LRS",
-                "Standard_GRS",
-                "Standard_ZRS",
-                "Premium_LRS"
-            ],
-            "type": "String",
-            "metadata": {
-                "description": "Storage Account type"
-            }
         }
     },
     "variables": {
@@ -152,14 +124,11 @@
         "osDiskType": "Standard_LRS",
         "subnetAddressPrefix": "10.1.0.0/24",
         "addressPrefix": "10.1.0.0/16",
-        "hostingPlanName": "[concat('hpn-', resourceGroup().name)]",
-        "storageAccountName": "[concat('store', uniquestring(resourceGroup().id))]",
         "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)),0,5)]",
         "funcAppName": "[toLower(concat(parameters('baseName'), variables('suffix')))]",
         "funcStorageName": "[tolower(concat(substring(parameters('baseName'), 0, min(length(parameters('baseName')),16)), 'stg', variables('suffix')))]",
         "serverFarmName": "[concat(substring(parameters('baseName'), 0, min(length(parameters('baseName')),14)), '-srv-', variables('suffix'))]",
-        "repoURL": "https://github.com/myamama/ITM-LeafEventAzFn.git",
-        "functionUrl": "[concat('https://', variables('funcAppName'),'.azurewebsites.net/runtime/webhooks/eventgrid?functionName=', parameters('FunctionName'),'&code=')]"
+        "repoURL": "https://github.com/myamama/ITM-LeafEventAzFn.git"
     },
     "resources": [
         {
@@ -183,7 +152,7 @@
                 }
             }
         },
-	{
+        {
             "type": "Microsoft.Devices/IotHubs/providers/eventSubscriptions",
             "apiVersion": "2020-01-01-preview",
             "name": "[concat(parameters('IoTHubname'), '/Microsoft.EventGrid/', 'LeafEventGridSubscription')]",
@@ -196,7 +165,7 @@
             "properties": {
                 "destination": {
                     "properties": {
-						"resourceId": "[resourceId('Microsoft.Web/sites/functions/', variables('funcAppName'), parameters('FunctionName'))]"
+                        "resourceId": "[resourceId('Microsoft.Web/sites/functions/', variables('funcAppName'), parameters('FunctionName'))]"
                     },
                     "endpointType": "AzureFunction"
                 },
@@ -205,7 +174,8 @@
                         "Microsoft.Devices.DeviceTelemetry"
                     ]
                 },
-                "labels": [],
+                "labels": [
+                ],
                 "eventDeliverySchema": "EventGridSchema",
                 "retryPolicy": {
                     "maxDeliveryAttempts": 30,
@@ -436,7 +406,7 @@
             "type": "string",
             "value": "[parameters('adminUsername')]"
         },
-         "funcStorageName": {
+        "funcStorageName": {
             "type": "String",
             "value": "[variables('funcStorageName')]"
         },
