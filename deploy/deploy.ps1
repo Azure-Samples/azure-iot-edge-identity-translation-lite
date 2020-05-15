@@ -15,7 +15,7 @@ function Retry-Command {
         [int] $TimeoutInSecs = 30,
         [string] $SuccessMessage = "Command executed successfuly!",
         [string] $FailureMessage = "Failed to execute the command"
-        )
+    )
         
     process {
         $Attempt = 1
@@ -371,6 +371,30 @@ Function New-IoTEdgeConfiguration() {
     }
 }
 
+Function New-WhitelistConfiguration() {
+    Param([System.Object[]] $deployment)
+
+    Write-Host "Starting uploading whitelist file..."
+
+    try {
+        $storageConfig = $deployment.Outputs["storageConfig"].Value.ToString() | ConvertFrom-Json
+
+        $storageAccountName = $storageConfig.accountName
+        $accountKey = $storageConfig.key
+        $containerName = $storageConfig.containerName
+    
+        $context = New-AzStorageContext -StorageAccountName $storageAccountName  -StorageAccountKey $accountKey
+        Set-AzStorageBlobContent -Container $containerName `
+            -File "..\src\cloud\functions\whitelistitm.txt" `
+            -Blob "whitelistitm.txt" -Context $context
+
+        Write-Host "Upload successful"
+    }
+    catch {
+        Write-Error "Error uploading whitelist file $($_.Exception.Message)"
+    }
+}
+
 #*******************************************************************************************************
 # Script body
 #*******************************************************************************************************
@@ -393,7 +417,8 @@ $script:deleteOnErrorPrompt = Select-ResourceGroup
 $script:deployment = New-Deployment -context $script:context
 
 # Using Retries since IoT Hub is in "Transitioning" state for a while it automatically adds RouteToEventGrid route
-{New-EventGridRouteFilter $script:deployment} | Retry-Command -TimeoutInSecs 20 -Verbose -RetryCount 5
-{New-IoTEdgeDevice $script:deployment} | Retry-Command -TimeoutInSecs 20 -Verbose -RetryCount 5
-{New-IoTEdgeConfiguration $script:deployment} | Retry-Command -TimeoutInSecs 20 -Verbose -RetryCount 5
+{ New-EventGridRouteFilter $script:deployment } | Retry-Command -TimeoutInSecs 20 -Verbose -RetryCount 5
+{ New-IoTEdgeDevice $script:deployment } | Retry-Command -TimeoutInSecs 20 -Verbose -RetryCount 5
+{ New-IoTEdgeConfiguration $script:deployment } | Retry-Command -TimeoutInSecs 20 -Verbose -RetryCount 5
+New-WhitelistConfiguration $script:deployment
 
