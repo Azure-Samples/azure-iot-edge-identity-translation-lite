@@ -37,7 +37,7 @@ This sample is a 'lite' implementation of the Identity Translation pattern as it
 
 There are two ways of setting up a running demo:
 
-- Automated sample setup can be found [here](/ITM-ARM/README.md).
+- Automated sample setup can be found [here](/docs/autodeploy.md).
 - There is also an option to setting up everything manually, including building the container images. You can find a [step-by-step guide here](/docs/stepbystep.md).
 
 
@@ -51,9 +51,18 @@ The solution also comprises of a cloud section that takes care of provisioning t
 
 ## Sample setup flow
 
-The sample setup flow uses an unsecure MQTT broker connection to interact with clients (represented by a Python script). 
+The sample setup flow uses an unsecure MQTT broker connection (mosquitto) to interact with clients (represented by the Python script [sim_clients.py](/src/test/ptm-mqtt/sim_clients.py)) and a custom implemented protocol translation module ([ptm-mqtt](/src/edge/modules/ptm-mqtt)) to interact with the identity translation module. 
 
 ![Sample flow diagram](docs/media/sampleflow.png)
+
+
+## Open points
+
+This is a sample implementation of the Identity Translation pattern. The following functionalities are not implemented.
+- DirectMethods to leaf devices
+- DeviceTwins for leaf devices
+- Persistance of leaf device registrations (the registration flow is initiated automatically when a leaf device starts sending messages)
+- Disable or delete leaf devices in IoTHub
 
 
 ## Contributing

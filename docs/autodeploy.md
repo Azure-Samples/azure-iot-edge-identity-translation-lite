@@ -24,4 +24,10 @@ Make sure you have installed this module using [instructions here](https://docs.
 
 ## Run sample client script
 
-TODO
+Once the installation is completed successfully, the client test script [sim_clients.py](/src/test/ptm-mqtt/sim_clients.py) can be used on the Edge VM to simulate leaf devices connecting over MQTT to the edge device.
+
+```
+python sim_clients.py -c 10 -n device -i 1
+```
+
+See the [client test script documentation](/docs/sim_clients.md) for a detailed description and examples.
