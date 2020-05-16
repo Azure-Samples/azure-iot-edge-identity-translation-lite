@@ -124,6 +124,7 @@
         "osDiskType": "Standard_LRS",
         "subnetAddressPrefix": "10.1.0.0/24",
         "addressPrefix": "10.1.0.0/16",
+        "storageContainerName": "functiondata",
         "suffix": "[substring(toLower(uniqueString(resourceGroup().id, resourceGroup().location)),0,5)]",
         "funcAppName": "[toLower(concat(parameters('baseName'), variables('suffix')))]",
         "funcStorageName": "[tolower(concat(substring(parameters('baseName'), 0, min(length(parameters('baseName')),16)), 'stg', variables('suffix')))]",
@@ -384,7 +385,17 @@
             "sku": {
                 "name": "Standard_LRS"
             },
-            "kind": "StorageV2"
+            "kind": "StorageV2",
+            "resources": [
+                {
+                    "name": "[concat('default/', variables('storageContainerName'))]",
+                    "type": "blobServices/containers",
+                    "apiVersion": "2018-07-01",
+                    "dependsOn": [
+                        "[variables('funcStorageName')]"
+                    ]
+                }
+            ]
         },
         {
             "type": "Microsoft.Web/serverfarms",
@@ -421,6 +432,14 @@
         "edgeVmName": {
             "type": "string",
             "value": "[parameters('vmName')]"
+        },
+        "storageConfig": {
+            "type": "object",
+            "value": {
+                "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
+                "containerName": "[variables('storageContainerName')]",
+                "accountName": "[variables('funcStorageName')]"
+            }
         }
     }
 }
