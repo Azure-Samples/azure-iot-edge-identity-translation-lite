@@ -115,6 +115,13 @@
             "metadata": {
                 "description": "Name of the branch to use when deploying (Default = master)."
             }
+        },
+        "systemTopicName": {
+            "defaultValue": "myiothubsystemtopic",
+            "type": "String",
+            "metadata": {
+                "description": "Provide a name for the system topic."
+            }
         }
     },
     "variables": {
@@ -158,12 +165,25 @@
             }
         },
         {
-            "type": "Microsoft.Devices/IotHubs/providers/eventSubscriptions",
-            "apiVersion": "2020-01-01-preview",
-            "name": "[concat(parameters('IoTHubname'), '/Microsoft.EventGrid/', 'LeafEventGridSubscription')]",
+            "type": "Microsoft.EventGrid/systemTopics",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[parameters('systemTopicName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Devices/IotHubs', parameters('IoTHubname'))]",
+                "[resourceId('Microsoft.Devices/IotHubs', parameters('IoTHubname'))]"
+            ],
+            "properties": {
+                "source": "[resourceId('Microsoft.Devices/IotHubs', parameters('IoTHubname'))]",
+                "topicType": "Microsoft.Devices.IotHubs"
+            }
+        },
+        {
+            "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[concat(parameters('systemTopicName'), '/', 'LeafEventGridSubscription')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.EventGrid/systemTopics', parameters('systemTopicName'))]",
                 "[resourceId('Microsoft.Web/sites/', variables('funcAppName'))]",
                 "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('funcAppName'), 'web')]"
             ],
@@ -179,8 +199,7 @@
                         "Microsoft.Devices.DeviceTelemetry"
                     ]
                 },
-                "labels": [
-                ],
+                "labels": [],
                 "eventDeliverySchema": "EventGridSchema",
                 "retryPolicy": {
                     "maxDeliveryAttempts": 30,
