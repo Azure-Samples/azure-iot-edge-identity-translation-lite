@@ -18,22 +18,22 @@ Note: if you already have an Azure IoT Hub account you wish to use you can skip 
 1. Log into the Azure Portal and open up Cloud Shell with Bash. If you prefer you can use Azure CLI on your own machine.
 2. Make sure you have installed CLI extension for Azure IoT: 
 `az extension add --name azure-iot`
-3. Create a new resource group: `az group create --name [your-resource-group-name] --location "[chosenregion]"`
-4. Create Azure IoT Hub: `az iot hub create --name [hubname] --resource-group [groupname] --partition-count 2 --sku S1`
-5. Register IoT Edge device: `az iot hub device-identity create --hub-name [hubname] --device-id edgeIdentityLite --edge-enabled`
-6. Retrieve the connection string for the device, to be used later: `az iot hub device-identity show-connection-string --device-id edgeIdentityLite --hub-name [hubname]`
+3. Create a new resource group: `az group create --name [resourcegroup-name] --location "[region]"`
+4. Create Azure IoT Hub: `az iot hub create --name [iothub-name] --resource-group [resourcegroup-name] --partition-count 2 --sku S1`
+5. Register IoT Edge device: `az iot hub device-identity create --hub-name [iothub-name] --device-id edgeIdentityLite --edge-enabled`
+6. Retrieve the connection string for the device, to be used later: `az iot hub device-identity show-connection-string --device-id edgeIdentityLite --hub-name [iothub-name]`
 
 
 ### Create Azure Storage Account
-This account will host a whitelisting text file to contain the names of the devices that are considered as whiteliested.
+This account will host a whitelisting text file to contain the names of the devices that are considered as whitelisted.
 1. Using Cloud Shell, create a new storage account: 
-`az storage account create --name [storagename] --resource-group [resourcegroupname]`
+`az storage account create --name [storage-name] --resource-group [resourcegroup-name]`
 2. Retrieve connection string:
- `az storage account show-connection-string --name [storagename]`. Copy the connection string to use in next statement.
+ `az storage account show-connection-string --name [storage-name]`. Copy the connection string to use in next statement.
 3. Create a new blob container:
-`az storage container create --account-name [storagename] --connection-string "[yourconnecstringstring]" --name whitelist`
+`az storage container create --account-name [storage-name] --connection-string "[storage-connectionstring]" --name whitelist`
 4. Upload the file [whitelistitm.txt](../src/cloud/functions/whitelistitm.txt) to the Bash Cloud shell environment: click the Upload/Download Files icon and upload the before mentioned file.
-5. Run the CLI for uploading to the container: `az storage blob upload --container-name whitelist --name whitelistitm.txt --file "whitelistitm.txt" --connection-string "[connection-string-for-storage]"`
+5. Run the CLI for uploading to the container: `az storage blob upload --container-name whitelist --name whitelistitm.txt --file "whitelistitm.txt" --connection-string "[storage-connectionstring]"`
 
 ### Create and Publish Azure Function
 
@@ -42,37 +42,34 @@ We will use Visual Studio Code to pre-configure the Azure Function to run locall
 1. From this cloned repo, open the following project in Visual Studio code: /src/cloud/functions.
 2. Rename the `local.settings.json.temp` file into `local.settings.json`.
 3. We need to create a new access policy that has both ServiceConnect, RegistryRead and RegistryWrite permissions for connecting to IoT Hub: 
-`az iot hub policy create --name functions2 --hub-name itmdocshub --permissions ServiceConnect RegistryRead RegistryWrite --resource-group itmdocs`
-4. Retrieve the service connection string for IoT Hub using Cloud Shell again: `az iot hub show-connection-string --name [hubname] --policy-name service --key primary`
+`az iot hub policy create --name itlpolicy --hub-name [iothub-name] --permissions ServiceConnect RegistryRead RegistryWrite --resource-group [resourcegroup-name]`
+4. Retrieve the service connection string for IoT Hub [iothub-connectionstring] using Cloud Shell again: `az iot hub show-connection-string --name [iothub-name] --policy-name itlpolicy --key primary`
 5. Update the settings as follows:
 ```
 {
     "IsEncrypted": false,
     "Values": {
-        "AzureWebJobsStorage": "[YOURSTORAGECONNECTION_STRING]",
+        "AzureWebJobsStorage": "[storage-connectionstring]",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet",
-        "IoTHubConnectionString" : "YOURHUBCONNECTION_STRING(created_above)",
-        "WhitelistStorageConnection": "YOURSTORAGECONNECTION_STRING",
+        "IoTHubConnectionString" : "[iothub-connectionstring]",
+        "WhitelistStorageConnection": "[storage-connectionstring]",
         "WhitelistContainerName": "whitelist",
         "WhitelistFilename": "whitelistitm.txt"
     }
 }
 ```
 6. Publish the Function via Command Palette (View > Command Palette). Start typing Azure Function and choose 'Azure Functions: Deploy to Function App...'.
-7. Make sure you choose the option 'Create new Function App in Azure - Advanced'. This option allows you to select an existing resource group and more flexibility in settings.
-![Function selection](media/function-deploy-adv.png)
+7. Make sure you choose the option 'Create new Function App in Azure - Advanced'. This option allows you to select an existing resource group and more flexibility in settings.<br>![Function selection](media/function-deploy-adv.png)
 8. Make your selection for these options:
-    - Provide a function name: [yourunique_func_name]
+    - Provide a function name: [function-name]
     - Runtime: .NET Core 2.2
     - OS: Windows
     - Hosting plan: Consumption
     - Select resource gruop: make sure you select the resource group created in the first part of this guide.
     - Create or choose an existing storage account.
     - Create a new Application Insights instance.
-    - Select the same location (region) as where you deployed your resource group.
-9. This will take a few minutes. When finished, you will see a confirmation at the bottom right. From there you have an option to Upload Settings (configuration settings), click this to push your local.settings.json configuration. 
-![function upload settings](media/function-deploy-config.png)
-Typically you can choose not to overwrite the Storage setting as this one has been set when creating the Azure function.
+    - Select the same location [region] as where you deployed your resource group.
+9. This will take a few minutes. When finished, you will see a confirmation at the bottom right. From there you have an option to Upload Settings (configuration settings), click this to push your local.settings.json configuration.<br>![function upload settings](media/function-deploy-config.png)<br>Typically you can choose not to overwrite the Storage setting as this one has been set when creating the Azure function.
 
 
 ### Configure Event Grid Subscription
@@ -80,11 +77,9 @@ We'll use the Azure Portal to implement this section.
 
 1. In Azure Portal, open your IoT Hub and choose Events.
 2. Choose 'Create new subscription'.
-3. Provide a name and make sure you select only 'Device Telemetry' for the the filter to event types.
-![event subscription creation](media/eventgrid-create.png)
+3. Provide a name and make sure you select only 'Device Telemetry' for the the filter to event types.<br>![event subscription creation](media/eventgrid-create.png)
 4. Under the section 'Endpoint details', leave it to Azure Function and click 'Select an endpoint'.
-5. Choose the deployed Azure Function app. Under the Function dropdown you should see the LeafDeviceCloudEventGrid listed.
-![event grid select funciton](media/eventgrid-functionselection.png)
+5. Choose the deployed Azure Function app. Under the Function dropdown you should see the LeafDeviceCloudEventGrid listed.<br>![event grid select funciton](media/eventgrid-functionselection.png)
 6. Confirm selection and then click 'Create'.
 7. Back on the Events screen, you can click Event Subscriptions, it should now show the newly created subscription.
 8. Next we want to filter the types of telemetry messages sent to Event Grid. We can do this using Event Grid subscription filters, but in our case we want to prevent sending all messages to the Event Grid endpoint so we will configure filtering at the IoT Hub 'Route' level.
@@ -94,10 +89,10 @@ We'll use the Azure Portal to implement this section.
 
 ### Create Azure Container Registry
 
-1. Using Azure Cloud Shell, run the following command to create your Azure Container registry: `az acr create --resource-group [your_resource_group_name] --name [acr_name] --sku Basic --admin-enabled true`
-2. Retrieve the username for logging into the registry in subsequent steps, and keep it handy: `az acr credential show --name [your_acr_name] --query username`
-3. Retrieve the password: `az acr credential show --name [your_acr_name] --query passwords[0].value`
-4. Retrieve the login server address: `az acr show -n [your_acr_name] --query loginServer`
+1. Using Azure Cloud Shell, run the following command to create your Azure Container registry: `az acr create --resource-group [resourcegroup-name] --name [acr-name] --sku Basic --admin-enabled true`
+2. Retrieve the username [acr-username] for logging into the registry in subsequent steps, and keep it handy: `az acr credential show --name [acr-name] --query username`
+3. Retrieve the password [acr-password]: `az acr credential show --name [acr-name] --query passwords[0].value`
+4. Retrieve the login server address: `az acr show -n [acr-name] --query loginServer`
 
 
 ### Install and configure Azure IoT Edge on VM
@@ -115,7 +110,7 @@ In this section we will use Visual Studio Code to configure, build and deploy th
 2. Configure the local environment settings:
     - Create a new .env file (or rename the supplied `.env.temp` one)
     - Copy the variables from `.env.temp` and fill in the Azure Container registry username, password and login server with the values you retrieved above.
-3. Login into the server with docker, open the Terminal in Visual Studio Code: `docker login [your_acr].azurecr.io -p "[YOURPWD]" -u itmdocsarc`
+3. Login into the server with docker, open the Terminal in Visual Studio Code: `docker login [acr-name].azurecr.io -p "[acr-password]" -u [acr-username]`
 4. Review the deployment template `deployment.debug.template.json`. This one contains three custom modules:
     - Identity Translation Module (`itm`): this is the core of the solution taking care of doing identity translation, sending a creation message to the cloud (for provisioning and child device assignment), and some caching of messages while the device is under creation.
     - Protocol Translation Module `ptm`: this is a sample that reads messages from an MQTT Mosquitto broker installed on the Edge as an additional module. It puts messages into edgeHub for further processing by the Identity Translation module.
@@ -150,17 +145,16 @@ Note: we use the same VM as the one running IoT Edge for ease of use. You could 
 
 ## Run the sample and simulate clients
 
-1. Using Visual Studio Code, with the Azure IoT Tools, start listening to telemetry messages from the IoT Edge device: right-click the Azure IoT Hub pane and choose 'Start Monitoring Built-in Event Endpoint'.
-![Monitor built in endpoint](media/vscodemonitord2c.png)
+1. Using Visual Studio Code, with the Azure IoT Tools, start listening to telemetry messages from the IoT Edge device: right-click the Azure IoT Hub pane and choose 'Start Monitoring Built-in Event Endpoint'.<br>![Monitor built in endpoint](media/vscodemonitord2c.png)
 2. Back in the Cloud Shell, SSH into the VM.
 3. Run the simulator script: 
-`python3 sim_clients.py -c 6 -n client -p 1`
-4. Leave it running for now, you can now go into Visual Studio Code and should see message logging for th creation of the devices such as this:
+`python3 sim_clients.py -c 6 -n client -i 1`
+4. Leave it running for now, you can go into Visual Studio Code and should see message logging for the creation of the devices such as this:
 ```
 [IoTHubMonitor] [3:23:34 PM] Message received from [edgeIdentityLite/IdentityTranslationLite]:
 {
   "body": {
-    "hubHostname": "[somehub].azure-devices.net",
+    "hubHostname": "[iothub-name].azure-devices.net",
     "leafDeviceId": "client2",
     "edgeDeviceId": "edgeIdentityLite",
     "edgeModuleId": "IdentityTranslationLite",
@@ -171,7 +165,7 @@ Note: we use the same VM as the one running IoT Edge for ease of use. You could 
   }
 }
 ```
-5. After a few moments, the Azure Function will have executed, and the Identity Translation module will start being abel to send messages with the leaf device identities, such as:
+5. After a few moments, the Azure Function will have executed, and the Identity Translation module will start being able to send messages with the leaf device identities, such as:
 ```
 [IoTHubMonitor] [4:06:47 PM] Message received from [client1]:
 {
