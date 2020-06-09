@@ -39,7 +39,7 @@ Install Python 3 on the VM:
 Run the Python script
 
 ```
-python3 sim_clients.py -c 10 -n device -i 1
+python3 sim_clients.py -c 6 -n client -i 1
 ```
 
 See the [client test script documentation](/docs/sim_clients.md) for a detailed description and examples.
