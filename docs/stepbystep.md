@@ -128,7 +128,7 @@ In this section we will use Visual Studio Code to configure, build and deploy th
 Note: we use the same VM as the one running IoT Edge for ease of use. You could also run the client MQTT client scripts on another machine but then you would need to configure networking to allow incoming traffic on the VM.
 
 1. SSH into the Edge VM, if you are not yet logged in. You can use Cloud Shell for this.
-2. Install Python on the VM:
+2. Install Python 3 on the VM:
     ```
     sudo apt-get update
     sudo apt-get install -y python3-dev
@@ -149,7 +149,7 @@ Note: we use the same VM as the one running IoT Edge for ease of use. You could 
 2. Back in the Cloud Shell, SSH into the VM.
 3. Run the simulator script: 
 `python3 sim_clients.py -c 6 -n client -i 1`
-4. Leave it running for now, you can go into Visual Studio Code and should see message logging for the creation of the devices such as this:
+4. Leave it running for now, you can now go into Visual Studio Code and should see message logging for th creation of the devices such as this:
 ```
 [IoTHubMonitor] [3:23:34 PM] Message received from [edgeIdentityLite/IdentityTranslationLite]:
 {

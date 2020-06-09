@@ -63,6 +63,8 @@ This is a sample implementation of the Identity Translation pattern. The followi
 - DeviceTwins for leaf devices
 - Persistance of leaf device registrations (the registration flow is initiated automatically when a leaf device starts sending messages)
 - Disable or delete leaf devices in IoTHub
+- The deployment ARM template refers to an external Git repo for Function deployment. Change once this repo is public.
+- Automate the Python install and sample code run
 
 
 ## Contributing
