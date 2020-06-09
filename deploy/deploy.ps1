@@ -302,7 +302,7 @@ Function New-EventGridRouteFilter() {
     try {
         $iotHubName = $deployment.Outputs["iotHubName"].Value
         Set-AzIotHubRoute -ResourceGroupName $script:ResourceGroupName `
-            -Name $iotHubName -RouteName "RouteToEventGrid" -Condition "itmtype = 'LeafEvents'"
+            -Name $iotHubName -RouteName "RouteToEventGrid" -Condition "itmtype = 'LeafEvent'"
     }
     catch {
         Write-Error "Failed to create a filter for the built in EventGrid route. $($_.Exception.Message)"

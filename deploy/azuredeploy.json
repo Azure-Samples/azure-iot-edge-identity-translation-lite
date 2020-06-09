@@ -129,7 +129,11 @@
         "funcAppName": "[toLower(concat(parameters('baseName'), variables('suffix')))]",
         "funcStorageName": "[tolower(concat(substring(parameters('baseName'), 0, min(length(parameters('baseName')),16)), 'stg', variables('suffix')))]",
         "serverFarmName": "[concat(substring(parameters('baseName'), 0, min(length(parameters('baseName')),14)), '-srv-', variables('suffix'))]",
-        "repoURL": "https://github.com/myamama/ITM-LeafEventAzFn.git"
+        "iotHubKeyName": "iothubowner",
+        "iotHubResourceId": "[resourceId('Microsoft.Devices/Iothubs', parameters('IoTHubname'))]",
+        "iotHubKeyResource": "[resourceId('Microsoft.Devices/Iothubs/Iothubkeys', parameters('IoTHubname'), variables('iotHubKeyName'))]",
+        "iotHubVersion": "2019-03-22",
+        "repoURL": "https://github.com/katriendg/iot-samples.git"
     },
     "resources": [
         {
@@ -323,7 +327,8 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms',variables('serverFarmName'))]",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName'))]"
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName'))]",
+                "[concat('Microsoft.Devices/IotHubs/', parameters('IoTHubname'))]"
             ],
             "kind": "functionapp",
             "properties": {
@@ -351,8 +356,28 @@
                             "value": "~2"
                         },
                         {
+                            "name": "Project",
+                            "value": "itm/functions"
+                        },
+                        {
                             "name": "FUNCTIONS_WORKER_RUNTIME",
                             "value": "dotnet"
+                        },
+                        {
+                            "name": "IoTHubConnectionString",
+                            "value": "[concat('HostName=', reference(variables('iotHubResourceId')).hostName, ';SharedAccessKeyName=', variables('iotHubKeyName'), ';SharedAccessKey=', listkeys(variables('iotHubKeyResource'), variables('iotHubVersion')).primaryKey)]"
+                        },
+                        {
+                            "name": "WhitelistStorageConnection",
+                            "value": "[Concat('DefaultEndpointsProtocol=https;AccountName=',variables('funcStorageName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('funcStorageName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
+                        },
+                        {
+                            "name": "WhitelistContainerName",
+                            "value": "[variables('storageContainerName')]"
+                        },
+                        {
+                            "name": "WhitelistFilename",
+                            "value": "whitelistitm.txt"
                         }
                     ]
                 }
@@ -418,11 +443,11 @@
             "value": "[parameters('adminUsername')]"
         },
         "funcStorageName": {
-            "type": "String",
+            "type": "string",
             "value": "[variables('funcStorageName')]"
         },
         "return": {
-            "type": "String",
+            "type": "string",
             "value": "[resourceId('Microsoft.Web/sites/functions/', variables('funcAppName'), parameters('functionName'))]"
         },
         "iotHubName": {
