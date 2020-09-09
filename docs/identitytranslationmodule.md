@@ -39,4 +39,4 @@ The leaf devices are using a symetric key to authenticate with IoTHub. The symet
 
 LeafDevice<sub>Key</sub> = HMAC_SHA256(key: IdentityTranslationModule<sub>Key</Sub>, tbs: {leafDeviceId})
 
-To calculate the leaf device symetric key, the Identity Translation Module uses the Sign functionality of the [Workflow API](https://github.com/Azure/iotedge/blob/master/edgelet/api/workloadVersion_2019_01_30.yaml) of the [Edge Security deamon](https://docs.microsoft.com/en-us/azure/iot-edge/iot-edge-security-manager). This can be found in the <code>SignAsync</code> function in the file [Program.cs](\modules\IdentityTranslationLite\Program.cs).
+To calculate the leaf device symetric key, the Identity Translation Module uses the Sign functionality of the [Workload API](https://github.com/Azure/iotedge/blob/master/edgelet/api/workloadVersion_2019_01_30.yaml) of the [Edge Security deamon](https://docs.microsoft.com/en-us/azure/iot-edge/iot-edge-security-manager). This can be found in the <code>SignAsync</code> function in the file [Program.cs](\modules\IdentityTranslationLite\Program.cs).
