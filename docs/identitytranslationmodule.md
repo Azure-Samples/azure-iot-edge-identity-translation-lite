@@ -27,7 +27,7 @@ The Identity Translation Module will filter out the messages from leaf devices (
 The messages from leaf devices will be handled as follows.
 - If this is the first messages received for this leaf device (the leafDeviceId cannot be found in the local device repository), a "LeafEvent" of type "create" is send to the IoTHub indicating that the device should be created by the [Azure Function](/src/cloud/functions) in Azure. The Identity Translation Module will wait for a Direct Method indicating that the device was created.
 - If this is a message for a known device waiting to be created in IoTHub, the message will be cached.
-- If this is a message for a known ande confirmed device, the message will be sent to IoTHub using the DeviceClient of the leaf device.
+- If this is a message for a known and confirmed device, the message will be sent to IoTHub using the DeviceClient of the leaf device.
 
 On receiving the confirmation of the leaf device being added to IoTHub (by a Direct Method), the Identity Trsansdlation Module will send all cached messages for that device as a batch to IoTHub after which all new messages will be send directly to IoTHub using the created Device Client.
 
@@ -35,7 +35,7 @@ This means that the Identity Translation module has a auto-create functionality 
 
 # Security
 ## Device Identity
-The leaf devices are using a symetric key to authenticate with IoTHub. The symetric key that is used for this authentication is calculated from the id of the lead device and the symetric key of the identity module using the following formula:
+The leaf devices are using a symetric key to authenticate with IoTHub. The symetric key that is used for this authentication is calculated from the id of the leaf device and the symetric key of the identity module using the following formula:
 
 LeafDevice<sub>Key</sub> = HMAC_SHA256(key: IdentityTranslationModule<sub>Key</Sub>, tbs: {leafDeviceId})
 
