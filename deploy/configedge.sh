@@ -24,6 +24,7 @@ done
 
 echo "$(date) Setting connection string to $connectionString" >> $logFile
 sed -i "s#\(device_connection_string: \).*#\1\"$connectionString\"#g" $configFile
-sudo systemctl restart iotedge
+systemctl unmask iotedge
+systemctl start iotedge
 
 echo " $(date) Connection string set to $connectionString"
