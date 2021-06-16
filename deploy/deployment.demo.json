@@ -55,7 +55,7 @@
             "status": "running",
             "restartPolicy": "always",
             "settings": {
-              "image": "eclipse-mosquitto:1.6",
+              "image": "eclipse-mosquitto:latest",
               "createOptions": "{\"ExposedPorts\":{\"1883/tcp\":{}},\"HostConfig\":{\"PortBindings\":{\"1883/tcp\":[{\"HostPort\":\"1883\"}]}}}"
             }
           }
