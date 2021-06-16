@@ -1,12 +1,12 @@
 #!/bin/sh
 # Copyright (c) Microsoft. All rights reserved.
 # configedge.sh
-# updates connection string in edge config.yaml and restarts edge runtime
+# updates connection string in edge config.toml and restarts edge runtime
 # accepts one parameter: a complete connection string
 # must be executed with elevated privileges
 set -e
 logFile=/var/log/azure/configedge.log
-configFile=/etc/iotedge/config.yaml
+configFile=/etc/aziot/config.toml
 
 if [ -z "$1" ]
 then
@@ -16,14 +16,16 @@ fi
 
 connectionString=$1
 
-# wait to set connection string until config.yaml is available
+# wait to set connection string until config.toml is available
 until [ -f $configFile ]
 do
     sleep 5
 done
 
 echo "$(date) Setting connection string to $connectionString" >> $logFile
-sed -i "s#\(device_connection_string: \).*#\1\"$connectionString\"#g" $configFile
-sudo systemctl restart iotedge
+sudo sed -i -z "s|## Manual provisioning with connection string\(.*\)## Manual provisioning with symmetric key|## Manual provisioning with connection string\n[provisioning]\nsource = \"manual\"\nconnection_string = \"$connectionString\"\n\n## Manual provisioning with symmetric key|" $configFile
+
+iotedge config apply
+iotedge system restart
 
 echo " $(date) Connection string set to $connectionString"

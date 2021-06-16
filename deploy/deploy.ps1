@@ -215,9 +215,6 @@ Function New-Deployment() {
                 Write-Host
             }
 
-            # Accept terms for ARM marketplace IoT Edge machine
-            Get-AzMarketplaceTerms -Publisher "microsoft_iot_edge" -Product "iot_edge_vm_ubuntu" -Name "ubuntu_1604_edgeruntimeonly" | Set-AzMarketplaceTerms -Accept
-
             # Start the deployment
             $templateFilePath = Join-Path $ScriptDir "azuredeploy.json"
             $deployment = New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
