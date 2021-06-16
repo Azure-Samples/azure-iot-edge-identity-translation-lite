@@ -73,7 +73,7 @@
             "status": "running",
             "restartPolicy": "always",
             "settings": {
-              "image": "eclipse-mosquitto:latest",
+              "image": "eclipse-mosquitto:1.6",
               "createOptions": {
                 "ExposedPorts": {
                   "1883/tcp": {}
