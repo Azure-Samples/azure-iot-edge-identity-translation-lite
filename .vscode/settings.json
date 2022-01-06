@@ -1,0 +1,8 @@
+{
+    "azureFunctions.deploySubpath": "src/cloud/functions/bin/Release/net6.0/publish",
+    "azureFunctions.projectLanguage": "C#",
+    "azureFunctions.projectRuntime": "~4",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.projectSubpath": "src/cloud/functions",
+    "azureFunctions.preDeployTask": "publish (functions)"
+}
