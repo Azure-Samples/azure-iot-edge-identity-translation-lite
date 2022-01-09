@@ -5,7 +5,7 @@
 1. Clone this repo.
 2. Install Visual Studio Code.
 3. Install Azure IoT Tools extension in Visual Studio Code.
-4. Install .NET Core 2.1 SDK.
+4. Install .NET 6.0 SDK.
 5. Install C# for Visual Studio Code (powered by OmniSharp) extension.
 6. Make sure you have the Azure Functions tools installed in Visual Studio Code.
 7. Make sure you have Docker Desktop on your machine, we will need it for building and pushing the images.
@@ -62,8 +62,8 @@ We will use Visual Studio Code to pre-configure the Azure Function to run locall
 7. Make sure you choose the option 'Create new Function App in Azure - Advanced'. This option allows you to select an existing resource group and more flexibility in settings.<br>![Function selection](media/function-deploy-adv.png)
 8. Make your selection for these options:
     - Provide a function name: [function-name]
-    - Runtime: .NET Core 2.2
-    - OS: Windows
+    - Runtime: .NET 6.0
+    - OS: Linux
     - Hosting plan: Consumption
     - Select resource gruop: make sure you select the resource group created in the first part of this guide.
     - Create or choose an existing storage account.
