@@ -1,11 +1,11 @@
+// Default URL for triggering event grid function in the local environment.
+// http://localhost:7071/runtime/webhooks/EventGrid?functionName=LeafDeviceCloudEventGrid
 using System;
 using System.IO;
 using System.Collections.Generic;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Common.Exceptions;
 using System.Threading.Tasks;
@@ -14,7 +14,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.EventGrid.Models;
-using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 
@@ -32,7 +31,7 @@ namespace IcaIdentityTranslation.LeafDeviceProcess
             log.LogInformation("LeafDeviceCloudEventGrid function processing Event Grid trigger.");
             log.LogInformation(eventGridEvent.Data.ToString());
             
-            iotHubConnectionString = System.Environment.GetEnvironmentVariable("iotHubConnectionString", EnvironmentVariableTarget.Process);
+            iotHubConnectionString = System.Environment.GetEnvironmentVariable("IoTHubConnectionString", EnvironmentVariableTarget.Process);
             dynamic data = JsonConvert.DeserializeObject(eventGridEvent.Data.ToString());
             //Note: we assume a JSON payload in the body, 'UTF-8' Encoded AND 'application/json' content type. Otherwise body will be base64 encoded
             LeafEvent deviceEvent = JsonConvert.DeserializeObject<LeafEvent>(data.body.ToString());
