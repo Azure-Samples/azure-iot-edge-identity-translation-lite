@@ -29,7 +29,7 @@ This account will host a whitelisting text file to contain the names of the devi
 1. Using Cloud Shell, create a new storage account: 
 `az storage account create --name [storage-name] --resource-group [resourcegroup-name]`
 2. Retrieve connection string:
- `az storage account show-connection-string --name [storage-name]`. Copy the connection string to use in next statement.
+ `az storage account connection-string show --name [storage-name]`. Copy the connection string to use in next statement.
 3. Create a new blob container:
 `az storage container create --account-name [storage-name] --connection-string "[storage-connectionstring]" --name whitelist`
 4. Upload the file [whitelistitm.txt](../src/cloud/functions/whitelistitm.txt) to the Bash Cloud shell environment: click the Upload/Download Files icon and upload the before mentioned file.
