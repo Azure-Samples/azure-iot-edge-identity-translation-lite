@@ -15,7 +15,7 @@ products:
 
 # Azure IoT Edge Identity Translation Lite: Sample on implementing Identity Translation at the edge
 
-This sample builds the required components to support the Idenity Translation pattern with Azure IoT Edge. The [Identity Translation Pattern](https://docs.microsoft.com/bs-latn-ba/azure/iot-edge/iot-edge-as-gateway#patterns) is a pattern by which you have to implement both protocol translation as well as having the devices behind the protocol adopt an identity in IoT Hub. However, the devices themselves don't talk directly to IoT Hub, but rather get their identities impersonated by a custom module in IoT Edge.
+This sample builds the required components to support the Idenity Translation pattern with Azure IoT Edge. The [Identity Translation Pattern](https://docs.microsoft.com/azure/iot-edge/iot-edge-as-gateway#patterns) is a pattern by which you have to implement both protocol translation as well as having the devices behind the protocol adopt an identity in IoT Hub. However, the devices themselves don't talk directly to IoT Hub, but rather get their identities impersonated by a custom module in IoT Edge.
 
 This sample is a 'lite' implementation of the Identity Translation pattern as it only supports the basic identity translation flows based on symmetric keys. 
 
