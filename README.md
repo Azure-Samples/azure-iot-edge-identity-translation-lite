@@ -4,7 +4,7 @@ languages:
 - csharp
 - python
 products:
-- dotnet-core
+- dotnet
 - azure
 - azure-iot
 - azure-iot-edge
